@@ -1,214 +1,214 @@
-<!-- Animated Typing Header -->
 <h1 align="center">
-  🚀 PulseIQ – AI Powered Analytics SaaS Platform
+  🚀 PulseIQ
 </h1>
 
 <p align="center">
-  <img src="https://readme-typing-svg.herokuapp.com?size=22&duration=4000&color=3B82F6&center=true&vCenter=true&width=600&lines=AI+Based+Website+%26+App+Analytics;Real-Time+User+Behaviour+Tracking;Smart+Dashboards+%26+Funnel+Analysis;Built+With+React+Node+MongoDB+AI" />
+  <b>AI Powered Analytics SaaS Platform</b>
 </p>
 
 <p align="center">
-  <b>Built with ❤️ by Arpan Jain & Team</b>  
-  <br/>
-  ⚡ Coming Soon – Industry Level SaaS Platform
+  <img src="https://readme-typing-svg.herokuapp.com?size=22&duration=4000&color=3B82F6&center=true&vCenter=true&width=750&lines=Transforming+User+Data+Into+Intelligent+Insights;Real-Time+Tracking+%7C+Funnel+Analytics+%7C+AI+Insights;Built+for+Modern+Digital+Businesses" />
+</p>
+
+<p align="center">
+  <a href="https://pulseiqai.netlify.app/">
+    <img src="https://img.shields.io/badge/🌐%20Live%20Product-Visit%20PulseIQ-3B82F6?style=for-the-badge" />
+  </a>
+  <img src="https://img.shields.io/badge/Stage-Pre--Launch-7C3AED?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Model-SaaS-blue?style=for-the-badge" />
 </p>
 
 ---
 
-## 📌 About PulseIQ
+# 🌍 Vision
 
-PulseIQ is an **AI-powered SaaS Analytics Platform** that helps companies understand user behaviour on their website or application.
+We believe that **data should guide every decision.**
 
-In today’s digital world, building a website is not enough —  
-understanding *how users interact* with it is the real power.
+PulseIQ is built with a clear vision:
 
-PulseIQ helps companies:
+> “To empower businesses with AI-driven behavioural intelligence.”
 
-✔ Track user activity  
-✔ Detect drop-offs  
-✔ Improve conversion rate  
-✔ Get AI-powered suggestions  
+In today’s competitive digital world, knowing *what users do* is not enough —  
+you must understand **why they do it**.
 
----
-
-## 🎯 Main Objective
-
-> To develop an AI-based SaaS analytics system that tracks and analyzes user behavior to help companies improve their website/app performance.
+PulseIQ bridges that gap.
 
 ---
 
-## 🧠 Problem It Solves
+# 💡 What is PulseIQ?
 
-Companies often struggle with:
+PulseIQ is an **AI-powered Website & App Analytics SaaS Platform** designed to:
 
-- ❓ Why are users leaving the website?
-- 📉 Why is the conversion rate low?
-- 🛒 Why are users dropping at checkout?
-- 🎓 Why are students quitting exams midway?
+- Track user behaviour in real time
+- Detect conversion drop-offs
+- Analyze funnels & retention
+- Provide AI-powered performance suggestions
 
-PulseIQ provides:
-
-- 📊 Real-time analytics  
-- 🔎 Funnel & retention analysis  
-- 🤖 AI-generated insights  
+It transforms raw interaction data into actionable intelligence.
 
 ---
 
-## 🔄 Complete Working Flow
+# 🚨 Market Problem
 
-1️⃣ Company Registration  
-2️⃣ Workspace & Project Creation  
-3️⃣ API Key Generation  
-4️⃣ Tracking Code Integration  
-5️⃣ Event Tracking  
-6️⃣ Secure Data Storage  
-7️⃣ Analytics Processing  
-8️⃣ Dashboard Visualization  
-9️⃣ AI Insights & Chatbot  
+Modern businesses struggle with:
 
----
+- 📉 Low conversion rates  
+- 🛒 Checkout abandonment  
+- 🎓 Exam quit ratios  
+- ❓ Unknown UX bottlenecks  
+- 📊 Complex analytics tools  
 
-## 👥 User Types
-
-### 1️⃣ Company Users
-- Admin
-- Team Member
-- Viewer
-
-### 2️⃣ Website Visitors
-- Anonymous users tracked via unique ID
+Most analytics tools show numbers.  
+**PulseIQ explains the story behind the numbers.**
 
 ---
 
-## 🔥 Core Features
+# 🧠 Our Solution
 
-### 🔐 Authentication System
-- Secure Login / Signup
-- Role-based access control
+PulseIQ combines:
 
-### 📊 Analytics Dashboard
-- DAU / MAU
-- Page Views
-- Event Tracking
-- Filters & Graphs
+✔ Real-time event tracking  
+✔ Funnel & retention analytics  
+✔ AI-based insight engine  
+✔ Smart dashboards  
+✔ Multi-tenant SaaS architecture  
 
-### 📉 Funnel Analysis
-- Step-by-step journey tracking
-- Drop-off detection
+Result → **Smarter decisions. Higher conversions. Better performance.**
 
-### 🔁 Retention Analysis
-- Returning users tracking
+---
 
-### 🤖 AI Insights
-- Automatic behaviour detection
-- Performance suggestions
+# 🏗 Product Architecture
 
-### 💬 AI Chatbot
-- Ask questions in natural language
-- Smart analytics assistant
+1️⃣ Company creates account  
+2️⃣ Generates secure API key  
+3️⃣ Integrates tracking script  
+4️⃣ User events sent to backend  
+5️⃣ Data processed & stored  
+6️⃣ AI engine analyzes behaviour  
+7️⃣ Dashboard displays insights  
 
-### 🛠 Admin Panel
+Designed for scalability and cloud deployment.
+
+---
+
+# 📊 Core Features
+
+## 🔐 Authentication & Access Control
+- Secure login / signup
+- Role-based access (Admin / Member / Viewer)
+
+## 📈 Advanced Analytics Dashboard
+- DAU / MAU tracking
+- Page & event analytics
+- Funnel drop analysis
+- Retention tracking
+
+## 🤖 AI Insights Engine
+- Behaviour anomaly detection
+- Conversion optimization suggestions
+- Predictive analysis (Planned)
+
+## 💬 AI Chatbot
+- Natural language dashboard queries
+- Intelligent analytics assistant
+
+## 🛠 Admin Control Panel
+- API key management
 - Project management
-- API key control
-- Team management
+- Team collaboration
 - Alerts system
 
 ---
 
-## 🎓 Exam / Coaching Analytics Use Case
+# 🎓 Special Use Case – Exam & Coaching Platforms
 
-PulseIQ can track:
+PulseIQ can analyze:
 
-- Student quit points
-- Section difficulty
-- Average time per question
-- High drop-off questions
+- Question-wise drop rates
+- Section difficulty patterns
+- Time per question
+- Reattempt behaviour
 
-AI Suggestions Example:
-> “Math section drop rate is high.”  
-> “Question 8 appears difficult.”  
+AI Example:
 
----
-
-## 🛠 Tech Stack
-
-| Technology | Usage |
-|------------|--------|
-| React + Tailwind | Frontend UI |
-| Node.js + Express | Backend API |
-| MongoDB | Database |
-| OpenAI / Gemini API | AI Insights |
-| Render / Vercel | Deployment |
+> “Math section shows 28% higher drop-off.”  
+> “Question 8 appears significantly difficult.”
 
 ---
 
-## 🏗 SaaS Architecture
+# 🛠 Tech Stack
 
-- Multi-tenant system  
-- Secure API Key based tracking  
-- Scalable backend structure  
-- Cloud deployment ready  
-
----
-
-## 🌍 Supported Platforms
-
-✔ Coaching Centers  
-✔ College Portals  
-✔ Exam Systems  
-✔ E-commerce Websites  
-✔ HR & Job Portals  
-✔ Business Websites  
-
-⚠ Note: Third-party platforms like YouTube, Instagram, Google cannot be directly tracked without access to their source code.
+| Layer | Technology |
+|-------|------------|
+| Frontend | React + Tailwind CSS |
+| Animations | Framer Motion |
+| Backend | Node.js + Express (Planned) |
+| Database | MongoDB (Planned) |
+| AI Layer | OpenAI / Gemini API |
+| Deployment | Netlify |
 
 ---
 
-## 🚀 Industry Level Project
+# 📈 Why PulseIQ is Different
 
-PulseIQ is designed as:
-
-✔ Real-world problem solving system  
-✔ SaaS architecture based  
-✔ AI integrated platform  
-✔ Resume & Interview ready project  
-
----
-
-## 📷 Preview (Coming Soon)
-
-<!-- You can replace this with real screenshots later -->
-<p align="center">
-  <img src="https://via.placeholder.com/800x400.png?text=PulseIQ+Dashboard+Preview+Coming+Soon" />
-</p>
+✔ AI-first analytics  
+✔ SaaS multi-tenant architecture  
+✔ Scalable backend-ready design  
+✔ Built for startups, institutions & enterprises  
+✔ Resume + investor pitch ready product  
 
 ---
 
-## 📌 Future Enhancements
+# 🌍 Target Customers
 
-- Advanced AI predictive analytics  
-- Heatmaps  
-- Session recording  
-- Real-time alerts  
-- Mobile app dashboard  
-
----
-
-## 📜 One Line Summary
-
-> PulseIQ is an AI-powered SaaS analytics platform designed to track, analyze, and improve user behavior across websites and applications.
+- Coaching Centers  
+- Colleges & EdTech Platforms  
+- E-commerce Startups  
+- SaaS Companies  
+- HR & Job Portals  
+- Growing Digital Businesses  
 
 ---
 
-## 👨‍💻 Built By
+# 🚀 Roadmap
 
-**Arpan Jain & Team**  
-💙 Passionate about building intelligent SaaS products  
+- [ ] Tracking SDK release  
+- [ ] Backend event ingestion API  
+- [ ] Full analytics dashboard  
+- [ ] AI chatbot integration  
+- [ ] Heatmaps  
+- [ ] Session recordings  
+- [ ] Enterprise plan  
+
+---
+
+# 👥 Team
+
+### **Arpan Jain**
+_Project Lead & Coordinator_
+
+### Core Team
+- Radhika Gupta  
+- Aryan Gupta  
+- Khushi Malohtra  
+- Girraj Singh  
+
+---
+
+# 📍 Live Product
+
+🌐 https://pulseiqai.netlify.app/
+
+---
+
+# 📜 Mission Statement
+
+> PulseIQ aims to redefine digital analytics by combining AI intelligence with real-time behavioural tracking to empower smarter business decisions.
 
 ---
 
 <p align="center">
-  ⭐ Star this repository if you like the project  
+  ⭐ If you believe in AI-driven analytics, star this repository  
   <br/>
-  🚀 Full version launching soon...
+  🚀 PulseIQ — Building the Future of Intelligent Analytics
 </p>
