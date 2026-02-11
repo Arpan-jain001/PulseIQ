@@ -195,10 +195,10 @@ AI Example:
 _Project Lead & Coordinator_
 
 ### Core Team
-- Radhika Gupta  
 - Aryan Gupta  
-- Khushi Malohtra  
 - Girraj Singh  
+- Khushi Malohtra  
+- Radhika Gupta
 
 ---
 
