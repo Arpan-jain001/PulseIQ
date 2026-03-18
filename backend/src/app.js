@@ -21,6 +21,11 @@ import workspaceRoutes from "./routes/workspace.routes.js";
 import verificationRoutes from "./routes/verification.routes.js";
 import aiRoutes from "./routes/ai.routes.js";
 
+import userRoutes from "./routes/user.routes.js";
+import adminUserRoutes from "./routes/admin.user.routes.js";
+import adminWorkspaceRoutes from "./routes/admin.workspace.routes.js";
+import adminNotificationRoutes from "./routes/admin.notification.routes.js";
+
 /* =========================================== */
 
 const app = express();
@@ -48,6 +53,12 @@ app.use(
 
 /* ================= HEALTH CHECK ================= */
 
+// Root (browser friendly)
+app.get("/", (req, res) => {
+  res.send("🚀 PulseIQ API Running");
+});
+
+// Health check (production)
 app.get("/health", (req, res) => {
   res.json({ success: true, message: "PulseIQ backend healthy 🚀" });
 });
@@ -64,11 +75,14 @@ app.use("/api/analytics", analyticsRoutes);
 app.use("/api/ai", aiRoutes);
 
 app.use("/api/notifications", notificationRoutes);
-
+app.use("/api/users", userRoutes);
 /* ===== ADMIN ROUTES ===== */
 
 app.use("/api/admin", adminRoutes);
 app.use("/api/admin/analytics", adminAnalyticsRoutes);
+app.use("/api/admin/users", adminUserRoutes);
+app.use("/api/admin/workspaces", adminWorkspaceRoutes);
+app.use("/api/admin/notifications", adminNotificationRoutes);
 
 /* ================= 404 ================= */
 

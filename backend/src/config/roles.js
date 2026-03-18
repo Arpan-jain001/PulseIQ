@@ -1,0 +1,12 @@
+export const ROLES = {
+  SUPER_ADMIN: "SUPER_ADMIN",
+  ORGANIZER: "ORGANIZER",
+  USER: "USER",
+};
+
+export const WORKSPACE_ROLES = {
+  OWNER: "OWNER",
+  ADMIN: "ADMIN",
+  MEMBER: "MEMBER",
+  VIEWER: "VIEWER",
+};
