@@ -1,1 +1,110 @@
-@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ================= BASE ================= */
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 220 20% 10%;
+
+    --card: 220 20% 97%;
+    --card-foreground: 220 20% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 20% 10%;
+
+    --primary: 220 90% 56%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 220 20% 10%;
+
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 10% 46%;
+
+    --accent: 262 83% 58%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 220 90% 56%;
+
+    --radius: 0.75rem;
+
+    --emerald: 160 84% 39%;
+    --amber: 38 92% 50%;
+    --rose: 347 77% 50%;
+    --sky: 199 89% 48%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Space Grotesk', sans-serif;
+    letter-spacing: -0.03em;
+  }
+
+  code, .font-mono {
+    font-family: 'JetBrains Mono', monospace;
+  }
+}
+
+/* ================= UTILITIES ================= */
+@layer utilities {
+  .text-gradient-hero {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(
+      135deg,
+      hsl(220, 20%, 10%) 0%,
+      hsl(220, 90%, 56%) 50%,
+      hsl(262, 83%, 58%) 100%
+    );
+  }
+
+  .glass {
+    @apply bg-white/70 backdrop-blur-xl border border-border/50;
+  }
+
+  .shadow-soft {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  }
+
+  .shadow-medium {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  }
+
+  .mesh-gradient {
+    background-image:
+      radial-gradient(at 27% 37%, hsl(220 90% 56% / 0.06) 0px, transparent 50%),
+      radial-gradient(at 97% 21%, hsl(262 83% 58% / 0.04) 0px, transparent 50%);
+  }
+
+  .dot-pattern {
+    background-image: radial-gradient(circle, hsl(220, 10%, 80%) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+}
+
+/* ================= EXTRA ================= */
+::selection {
+  background: hsl(220 90% 56% / 0.15);
+}
+
+@layer utilities {
+  .ease-smooth {
+    transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+}
