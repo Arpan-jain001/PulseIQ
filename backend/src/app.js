@@ -25,7 +25,7 @@ import userRoutes from "./routes/user.routes.js";
 import adminUserRoutes from "./routes/admin.user.routes.js";
 import adminWorkspaceRoutes from "./routes/admin.workspace.routes.js";
 import adminNotificationRoutes from "./routes/admin.notification.routes.js";
-
+import eventRoutes from "./routes/event.routes.js";
 /* =========================================== */
 
 const app = express();
@@ -76,6 +76,7 @@ app.use("/api/ai", aiRoutes);
 
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/events", eventRoutes);
 /* ===== ADMIN ROUTES ===== */
 
 app.use("/api/admin", adminRoutes);
