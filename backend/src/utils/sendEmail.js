@@ -1,24 +1,40 @@
 import nodemailer from "nodemailer";
 
 export const sendEmail = async ({ to, subject, html }) => {
-  const transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
+  try {
+    const transporter = nodemailer.createTransport({
+      host: "smtp.gmail.com",
 
-    // 🔥 PORT CONFIG (AUTO HANDLE)
-    port: process.env.EMAIL_PORT || 465,
+      // ✅ ALWAYS USE 587 (BEST FOR RENDER)
+      port: 587,
+      secure: false, // ❗ MUST be false for 587
 
-    secure: process.env.EMAIL_PORT == 465, // true for 465, false for 587
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
 
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-  });
+      // ✅ TIMEOUT FIX (IMPORTANT)
+      connectionTimeout: 10000, // 10 sec
+      greetingTimeout: 10000,
+      socketTimeout: 10000,
+    });
 
-  await transporter.sendMail({
-    from: `"PulseIQ" <${process.env.EMAIL_USER}>`,
-    to,
-    subject,
-    html,
-  });
+    const info = await transporter.sendMail({
+      from: `"PulseIQ 🚀" <${process.env.EMAIL_USER}>`,
+      to,
+      subject,
+      html,
+    });
+
+    console.log("📧 Email sent:", info.messageId);
+
+    return true;
+  } catch (err) {
+    console.log("❌ Email failed:", err.message);
+
+    // ❗ IMPORTANT: error throw mat karo
+    // warna API fail ho jayega
+    return false;
+  }
 };
