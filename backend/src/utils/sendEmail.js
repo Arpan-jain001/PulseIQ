@@ -2,24 +2,33 @@ import nodemailer from "nodemailer";
 
 export const sendEmail = async ({ to, subject, html }) => {
   try {
+    // 🔥 TRANSPORTER (RENDER SAFE + IPV4 FIX)
     const transporter = nodemailer.createTransport({
       host: "smtp.gmail.com",
 
-      // ✅ ALWAYS USE 587 (BEST FOR RENDER)
-      port: 587,
-      secure: false, // ❗ MUST be false for 587
+      // ✅ USE 465 (MORE STABLE THAN 587 ON RENDER)
+      port: 465,
+      secure: true, // MUST true for 465
 
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
       },
 
-      // ✅ TIMEOUT FIX (IMPORTANT)
-      connectionTimeout: 10000, // 10 sec
+      // 🔥 IMPORTANT FIXES
+      tls: {
+        family: 4, // ✅ FORCE IPv4 (fix ENETUNREACH)
+      },
+
+      connectionTimeout: 10000,
       greetingTimeout: 10000,
       socketTimeout: 10000,
     });
 
+    // 🔥 VERIFY CONNECTION (OPTIONAL BUT GOOD)
+    await transporter.verify();
+
+    // 📧 SEND MAIL
     const info = await transporter.sendMail({
       from: `"PulseIQ 🚀" <${process.env.EMAIL_USER}>`,
       to,
@@ -33,8 +42,7 @@ export const sendEmail = async ({ to, subject, html }) => {
   } catch (err) {
     console.log("❌ Email failed:", err.message);
 
-    // ❗ IMPORTANT: error throw mat karo
-    // warna API fail ho jayega
+    // ❗ NEVER THROW ERROR (app crash avoid)
     return false;
   }
 };
