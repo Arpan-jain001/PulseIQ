@@ -2,8 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import axios from "axios";
 
-const BASE_API_URL =
-  import.meta.env.VITE_BACKEND_API_URL || "http://localhost:3000";
+const BASE_API_URL = import.meta.env.VITE_BACKEND_API_URL;
 
 export default function ResetPassword() {
   const { token } = useParams();

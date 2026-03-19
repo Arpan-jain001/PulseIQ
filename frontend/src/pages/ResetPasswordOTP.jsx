@@ -3,8 +3,7 @@ import { useState, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import axios from "axios";
 
-const BASE_API_URL =
-  import.meta.env.VITE_BACKEND_API_URL || "http://localhost:3000";
+const BASE_API_URL = import.meta.env.VITE_BACKEND_API_URL;
 
 export default function ResetPasswordOTP() {
   const params = new URLSearchParams(useLocation().search);

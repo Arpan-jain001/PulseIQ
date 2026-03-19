@@ -4,8 +4,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Loader2, MailCheck } from "lucide-react";
 
-const BASE_API_URL =
-  import.meta.env.VITE_BACKEND_API_URL || "http://localhost:3000";
+const BASE_API_URL = import.meta.env.VITE_BACKEND_API_URL;
 
 const VerifyEmail = () => {
   const navigate = useNavigate();

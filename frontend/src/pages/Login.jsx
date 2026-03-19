@@ -8,7 +8,7 @@ import Navbar from "@/components/Navbar";
 import { useGoogleLogin } from "@react-oauth/google"; // ✅ ONLY useGoogleLogin
 import { useAuth } from "../hooks/useAuth.js";
 
-const BASE_API_URL = import.meta.env.VITE_BACKEND_API_URL || "http://localhost:3000";
+const BASE_API_URL = import.meta.env.VITE_BACKEND_API_URL;
 
 // SmsToast, LoginLoader, SuccessOverlay - SAME AS BEFORE (unchanged)
 const SmsToast = ({ type = "info", message, onClose }) => {

@@ -5,7 +5,7 @@ import { Eye, EyeOff, ArrowRight, Loader2, CheckCircle2 } from "lucide-react";
 import axios from "axios";
 import Navbar from "@/components/Navbar";
 
-const BASE_API_URL = import.meta.env.VITE_BACKEND_API_URL || "http://localhost:3000";
+const BASE_API_URL = import.meta.env.VITE_BACKEND_API_URL;
 
 const SmsToast = ({ type = "info", message, onClose }) => {
   const badge = type === "success" ? "✅" : type === "error" ? "❌" : "ℹ️";
