@@ -36,6 +36,9 @@ import adminNotificationRoutes from "./routes/admin.notification.routes.js";
 
 const app = express();
 
+/* ================= 🔥 TRUST PROXY (RENDER FIX) ================= */
+app.set("trust proxy", 1);
+
 /* ================= SECURITY ================= */
 
 // Helmet → secure headers
@@ -48,20 +51,24 @@ app.use(
 // Logger
 app.use(morgan("combined"));
 
-// Rate limiter (GLOBAL)
+/* ================= RATE LIMIT ================= */
+
 app.use(rateLimiter);
 
 /* ================= BODY PARSER ================= */
 
-app.use(express.json({ limit: "10kb" })); // prevent large payload attacks
+app.use(express.json({ limit: "10kb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-/* ================= CORS ================= */
+/* ================= CORS (PRODUCTION READY) ================= */
 
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    origin: [
+      "http://localhost:5173",
+      "https://pulseiqai.netlify.app",
+    ],
     credentials: true,
   })
 );
