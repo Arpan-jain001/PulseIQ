@@ -34,3 +34,5 @@ build/
 
 # Coverage
 coverage/
+# Google OAuth secrets (CRITICAL - NEVER COMMIT)
+src/client_secret_638445291797-jhmp06amf90quqi8bvohhresbgsu8jap.apps.googleusercontent.com.json

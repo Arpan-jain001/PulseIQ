@@ -3,11 +3,7 @@ import bcrypt from "bcryptjs";
 
 const userSchema = new mongoose.Schema(
   {
-    name: {
-      type: String,
-      required: true,
-      trim: true,
-    },
+    name: { type: String, required: true, trim: true },
 
     email: {
       type: String,
@@ -17,11 +13,10 @@ const userSchema = new mongoose.Schema(
       trim: true,
     },
 
-    password: {
-      type: String,
-      required: true,
-      minlength: 6,
-    },
+    password: { type: String, minlength: 6 },
+
+    googleId: String,
+    avatar: String,
 
     role: {
       type: String,
@@ -41,32 +36,35 @@ const userSchema = new mongoose.Schema(
       default: "PENDING",
     },
 
-    refreshToken: {
-      type: String,
-      default: "",
-    },
+    emailVerified: { type: Boolean, default: false },
+
+    emailVerificationToken: String,
+    emailVerificationOTP: String,
+    emailVerificationExpire: Date,
+
+    // 🔥 RESET PASSWORD
+    resetPasswordToken: String,
+    resetPasswordOTP: String,
+    resetPasswordExpire: Date,
+
+    refreshToken: { type: String, default: "",select: false },
+
+    lastLoginAt: {
+  type: Date,
+},
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
-/* ================= PASSWORD HASH (Mongoose v7 SAFE) ================= */
-
+/* 🔐 HASH PASSWORD */
 userSchema.pre("save", async function () {
-  // password change nahi hua to skip
-  if (!this.isModified("password")) return;
-
-  // hash password
+  if (!this.isModified("password") || !this.password) return;
   this.password = await bcrypt.hash(this.password, 12);
 });
 
-/* ================= PASSWORD MATCH ================= */
-
+/* 🔑 MATCH PASSWORD */
 userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
-
-/* ================= EXPORT ================= */
 
 export default mongoose.model("User", userSchema);
