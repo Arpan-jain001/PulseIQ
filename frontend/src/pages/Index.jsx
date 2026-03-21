@@ -1,8 +1,8 @@
-import Navbar from "@/components/Navbar";
-import Hero from "@/components/Hero";
-import Features from "@/components/Features";
-import HowItWorks from "@/components/HowItWorks";
-import { UseCases, TeamSection, CTASection, Footer } from "@/components/LandingComponents";
+import Navbar from "../components/Navbar";
+import Hero from "../components/Hero";
+import Features from "../components/Features";
+import HowItWorks from "../components/HowItWorks";
+import { UseCases, TeamSection, CTASection, Footer } from "../components/LandingComponents";
 
 const TickerBar = () => {
   const items = ["Real-Time Analytics", "AI Insights", "Funnel Analysis", "RBAC Security", "Event Tracking", "Session Analytics", "Retention Curves", "NL Queries", "EdTech Analytics", "Multi-Tenant SaaS"];

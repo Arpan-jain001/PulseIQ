@@ -2,7 +2,7 @@ import { motion, AnimatePresence, useScroll, useMotionValueEvent } from "framer-
 import { Link } from "react-router-dom";
 import { Menu, X, Zap, LogOut, ChevronDown, User } from "lucide-react";
 import { useState } from "react";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "../hooks/useAuth.js";
 
 const NAV_LINKS = ["Features", "How It Works", "Use Cases", "Team"];
 

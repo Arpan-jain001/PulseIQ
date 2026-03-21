@@ -3,7 +3,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Loader2, MailCheck, RefreshCw, CheckCircle2 } from "lucide-react";
-import Navbar from "@/components/Navbar";
+import Navbar from "../components/Navbar";
 
 const BASE_API_URL = import.meta.env.VITE_BACKEND_API_URL;
 const TIMEOUT_MS = 30_000;

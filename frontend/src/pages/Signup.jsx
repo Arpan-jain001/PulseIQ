@@ -3,7 +3,7 @@ import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, ArrowRight, Loader2, CheckCircle2, User, Building2, Zap, ShieldCheck } from "lucide-react";
 import axios from "axios";
-import Navbar from "@/components/Navbar";
+import Navbar from "../components/Navbar";
 
 const BASE_API_URL = import.meta.env.VITE_BACKEND_API_URL;
 

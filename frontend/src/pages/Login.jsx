@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, ArrowRight, Loader2, ShieldCheck, Zap } from "lucide-react";
 import axios from "axios";
-import Navbar from "@/components/Navbar";
+import Navbar from "../components/Navbar";
 import { useGoogleLogin } from "@react-oauth/google";
 import { useAuth } from "../hooks/useAuth.js";
 
