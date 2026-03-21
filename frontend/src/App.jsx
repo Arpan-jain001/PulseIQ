@@ -1,8 +1,8 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import { Toaster } from "@/components/ui/sonner";
-import { ToasterComponent } from "@/components/ui/toaster";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster } from "./components/ui/sonner";
+import { ToasterComponent } from "./components/ui/toaster";
+import { TooltipProvider } from "./components/ui/tooltip";
 import { useWarmup } from "./hooks/useWarmup.js";
 
 // Pages
