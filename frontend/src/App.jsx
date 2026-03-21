@@ -3,89 +3,87 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster } from "@/components/ui/sonner";
 import { ToasterComponent } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { useWarmup } from "./hooks/useWarmup.js";
 
-// ✅ EXISTING
+// Pages
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import NotFound from "./pages/NotFound";
 
-// ✅ VERIFY FLOW
+// Verify flow
 import VerifyEmail from "./pages/VerifyEmail";
 import VerifyLink from "./pages/VerifyLink";
 import VerifyOTP from "./pages/VerifyOTP";
 
-// ✅ PASSWORD FLOW
+// Password flow
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
-import ResetPasswordOTP from "./pages/ResetPasswordOTP"; // 🔥 ADD THIS
+import ResetPasswordOTP from "./pages/ResetPasswordOTP";
 
-// ✅ PROTECTED
+// Protected
 import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
-const App = () => {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <ToasterComponent />
+const BackendWarmup = () => { useWarmup(); return null; };
 
-        <BrowserRouter>
-          <Routes>
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
+      <Toaster />
+      <ToasterComponent />
+      <BackendWarmup />
 
-            {/* 🌐 PUBLIC */}
-            <Route path="/" element={<Index />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
+      <BrowserRouter>
+        <Routes>
+          {/* Public */}
+          <Route path="/" element={<Index />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
 
-            {/* 🔐 EMAIL VERIFY */}
-            <Route path="/verify-email" element={<VerifyEmail />} />
-            <Route path="/verify-email/:token" element={<VerifyLink />} />
-            <Route path="/verify-otp" element={<VerifyOTP />} />
+          {/* Email verify */}
+          <Route path="/verify-email" element={<VerifyEmail />} />
+          <Route path="/verify-email/:token" element={<VerifyLink />} />
+          <Route path="/verify-otp" element={<VerifyOTP />} />
 
-            {/* 🔑 PASSWORD */}
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/reset-password/:token" element={<ResetPassword />} />
-            <Route path="/reset-password-otp" element={<ResetPasswordOTP />} /> {/* 🔥 IMPORTANT */}
+          {/* Password */}
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
+          <Route path="/reset-password-otp" element={<ResetPasswordOTP />} />
 
-            {/* 🔒 DASHBOARD ROUTING */}
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute>
-                  <div>Dashboard Page</div>
-                </ProtectedRoute>
-              }
-            />
+          {/* ✅ Dashboards — allowedRoles array (not role prop) */}
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute allowedRoles={["USER"]}>
+                <div>User Dashboard — Coming Soon</div>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin-dashboard"
+            element={
+              <ProtectedRoute allowedRoles={["SUPER_ADMIN"]}>
+                <div>Admin Dashboard — Coming Soon</div>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/organizer-dashboard"
+            element={
+              <ProtectedRoute allowedRoles={["ORGANIZER"]}>
+                <div>Organizer Dashboard — Coming Soon</div>
+              </ProtectedRoute>
+            }
+          />
 
-            <Route
-              path="/admin-dashboard"
-              element={
-                <ProtectedRoute role="SUPER_ADMIN">
-                  <div>Admin Dashboard</div>
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/organizer-dashboard"
-              element={
-                <ProtectedRoute role="ORGANIZER">
-                  <div>Organizer Dashboard</div>
-                </ProtectedRoute>
-              }
-            />
-
-            {/* ❌ 404 */}
-            <Route path="*" element={<NotFound />} />
-
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
-  );
-};
+          {/* 404 */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </BrowserRouter>
+    </TooltipProvider>
+  </QueryClientProvider>
+);
 
 export default App;

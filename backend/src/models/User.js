@@ -18,6 +18,9 @@ const userSchema = new mongoose.Schema(
     googleId: String,
     avatar: String,
 
+    // ✅ Added companyName — used by Signup form for ORGANIZER role
+    companyName: { type: String, trim: true, default: null },
+
     role: {
       type: String,
       enum: ["SUPER_ADMIN", "ORGANIZER", "USER"],
@@ -42,27 +45,26 @@ const userSchema = new mongoose.Schema(
     emailVerificationOTP: String,
     emailVerificationExpire: Date,
 
-    // 🔥 RESET PASSWORD
+    // Reset password
     resetPasswordToken: String,
     resetPasswordOTP: String,
     resetPasswordExpire: Date,
 
-    refreshToken: { type: String, default: "",select: false },
+    // ✅ select: false — must use .select("+refreshToken") explicitly
+    refreshToken: { type: String, default: "", select: false },
 
-    lastLoginAt: {
-  type: Date,
-},
+    lastLoginAt: { type: Date },
   },
   { timestamps: true }
 );
 
-/* 🔐 HASH PASSWORD */
+/* 🔐 HASH PASSWORD before save */
 userSchema.pre("save", async function () {
   if (!this.isModified("password") || !this.password) return;
   this.password = await bcrypt.hash(this.password, 12);
 });
 
-/* 🔑 MATCH PASSWORD */
+/* 🔑 COMPARE PASSWORD */
 userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };

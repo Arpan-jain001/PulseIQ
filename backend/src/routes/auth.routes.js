@@ -1,5 +1,6 @@
 import express from "express";
 import jwt from "jsonwebtoken";
+import { OAuth2Client } from "google-auth-library";
 import {
   registerUser,
   loginUser,
@@ -17,9 +18,14 @@ import {
 import { protect } from "../middleware/auth.middleware.js";
 import { authLimiter } from "../middleware/rateLimit.middleware.js";
 
-
-
 const router = express.Router();
+
+// ✅ FIX: OAuth2Client with "postmessage" redirect — required for auth-code flow
+const googleClient = new OAuth2Client(
+  process.env.GOOGLE_CLIENT_ID,
+  process.env.GOOGLE_CLIENT_SECRET,
+  "postmessage"
+);
 
 /* ================= REGISTER ================= */
 router.post("/register", authLimiter, async (req, res) => {
@@ -90,12 +96,41 @@ router.post("/login", authLimiter, async (req, res) => {
   }
 });
 
-/* ================= GOOGLE LOGIN ================= */
+/* ================= GOOGLE LOGIN (auth-code flow) ================= */
+// ✅ FIXED: Frontend sends `code` (not access_token/id_token)
+// Backend exchanges code → gets id_token → verifies → finds/creates user
 router.post("/google", authLimiter, async (req, res) => {
   try {
-    const { token } = req.body;
+    const { code } = req.body;
 
-    const { user, accessToken, refreshToken } = await googleLogin(token);
+    if (!code) {
+      return res.status(400).json({ success: false, message: "Authorization code required" });
+    }
+
+    // Step 1: Exchange auth code for tokens
+    const { tokens } = await googleClient.getToken(code);
+    const idToken = tokens.id_token;
+
+    if (!idToken) {
+      return res.status(400).json({ success: false, message: "Failed to get ID token from Google" });
+    }
+
+    // Step 2: Verify ID token and extract user info
+    const ticket = await googleClient.verifyIdToken({
+      idToken,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+
+    // Step 3: Find or create user in DB
+    const { user, accessToken, refreshToken } = await googleLogin({
+      googleId: payload.sub,
+      email: payload.email,
+      name: payload.name,
+      avatar: payload.picture,
+      emailVerified: payload.email_verified,
+    });
 
     res.json({
       success: true,
@@ -110,6 +145,7 @@ router.post("/google", authLimiter, async (req, res) => {
       },
     });
   } catch (e) {
+    console.error("Google login error:", e?.message || e);
     res.status(e.statusCode || 401).json({
       success: false,
       message: e.message || "Google login failed",
@@ -121,15 +157,10 @@ router.post("/google", authLimiter, async (req, res) => {
 router.post("/refresh", async (req, res) => {
   try {
     const { refreshToken } = req.body;
-
     const { accessToken } = await refreshAccessToken(refreshToken);
-
     res.json({ success: true, accessToken });
   } catch (e) {
-    res.status(401).json({
-      success: false,
-      message: "Token refresh failed",
-    });
+    res.status(401).json({ success: false, message: "Token refresh failed" });
   }
 });
 
@@ -139,60 +170,35 @@ router.post("/logout", protect, async (req, res) => {
   res.json({ success: true, message: "Logged out" });
 });
 
-/* ================= VERIFY EMAIL LINK ================= */
-
+/* ================= VERIFY EMAIL (Link) ================= */
 router.get("/verify-email/:token", async (req, res) => {
   try {
     await verifyEmailByLink(req.params.token);
-
-    res.json({
-      success: true,
-      message: "Email verified successfully",
-    });
+    res.json({ success: true, message: "Email verified successfully" });
   } catch (e) {
-    res.status(400).json({
-      success: false,
-      message: e.message,
-    });
+    res.status(400).json({ success: false, message: e.message });
   }
 });
 
-/* ================= VERIFY EMAIL OTP ================= */
+/* ================= VERIFY EMAIL (OTP) ================= */
 router.post("/verify-email-otp", async (req, res) => {
   try {
     const { email, otp } = req.body;
-
     await verifyEmailByOTP(email, otp);
-
-    res.json({
-      success: true,
-      message: "Email verified successfully",
-    });
+    res.json({ success: true, message: "Email verified successfully" });
   } catch (e) {
-    res.status(400).json({
-      success: false,
-      message: e.message,
-    });
+    res.status(400).json({ success: false, message: e.message });
   }
 });
 
 /* ================= RESEND VERIFICATION ================= */
-
 router.post("/resend-verification", async (req, res) => {
   try {
     const { email } = req.body;
-
     await resendVerification(email);
-
-    res.json({
-      success: true,
-      message: "Verification email sent again",
-    });
+    res.json({ success: true, message: "Verification email sent again" });
   } catch (e) {
-    res.status(e.statusCode || 400).json({
-      success: false,
-      message: e.message,
-    });
+    res.status(e.statusCode || 400).json({ success: false, message: e.message });
   }
 });
 
@@ -200,11 +206,7 @@ router.post("/resend-verification", async (req, res) => {
 router.post("/forgot-password", async (req, res) => {
   try {
     await forgotPassword(req.body.email);
-
-    res.json({
-      success: true,
-      message: "Reset link sent to email",
-    });
+    res.json({ success: true, message: "Reset link + OTP sent to email" });
   } catch (e) {
     res.status(e.statusCode || 400).json({
       success: false,
@@ -213,27 +215,25 @@ router.post("/forgot-password", async (req, res) => {
   }
 });
 
-/* RESET PASSWORD */
+/* ================= RESET PASSWORD (Link) ================= */
 router.post("/reset-password/:token", async (req, res) => {
   try {
     await resetPassword(req.params.token, req.body.password);
-    res.json({ success: true });
+    res.json({ success: true, message: "Password reset successfully" });
   } catch (e) {
-    res.status(400).json({ message: e.message });
+    res.status(400).json({ success: false, message: e.message });
   }
 });
 
-/* RESET PASSWORD OTP */
+/* ================= RESET PASSWORD (OTP) ================= */
 router.post("/reset-password-otp", async (req, res) => {
   try {
     const { email, otp, password } = req.body;
     await resetPasswordByOTP(email, otp, password);
-    res.json({ success: true });
+    res.json({ success: true, message: "Password reset successfully" });
   } catch (e) {
-    res.status(400).json({ message: e.message });
+    res.status(400).json({ success: false, message: e.message });
   }
 });
-
-
 
 export default router;

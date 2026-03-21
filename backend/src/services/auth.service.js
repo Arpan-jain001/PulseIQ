@@ -1,16 +1,17 @@
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
-import { OAuth2Client } from "google-auth-library";
 import crypto from "crypto";
 import { sendEmail } from "../utils/sendEmail.js";
-import { getVerificationTemplate } from "../utils/emailTemplate.js";
-import { getForgotPasswordTemplate } from "../utils/emailTemplate.js";
-import { getWelcomeTemplate, getLoginAlertTemplate } from "../utils/emailTemplate.js";
+import {
+  getVerificationTemplate,
+  getForgotPasswordTemplate,
+  getWelcomeTemplate,
+  getLoginAlertTemplate,
+} from "../utils/emailTemplate.js";
 
-
-const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-
-/* ================= TOKENS ================= */
+/* ═══════════════════════════════════════════
+   TOKEN GENERATORS
+═══════════════════════════════════════════ */
 
 const generateAccessToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -22,9 +23,11 @@ const generateRefreshToken = (id) =>
     expiresIn: process.env.REFRESH_EXPIRE || "7d",
   });
 
-/* ================= REGISTER ================= */
+/* ═══════════════════════════════════════════
+   REGISTER
+═══════════════════════════════════════════ */
 
-export const registerUser = async ({ name, email, password, role }) => {
+export const registerUser = async ({ name, email, password, role, companyName }) => {
   const exists = await User.findOne({ email });
   if (exists) throw { statusCode: 409, message: "Email already exists" };
 
@@ -36,138 +39,145 @@ export const registerUser = async ({ name, email, password, role }) => {
     email,
     password,
     role: role || "USER",
+    companyName: companyName || null,           // ✅ companyName support added
     emailVerificationToken: token,
     emailVerificationOTP: otp,
-    emailVerificationExpire: Date.now() + 10 * 60 * 1000,
+    emailVerificationExpire: Date.now() + 10 * 60 * 1000, // 10 min
   });
 
   const link = `${process.env.CLIENT_URL}/verify-email/${token}`;
 
   await sendEmail({
     to: email,
-    subject: "Verify Email",
-   html: getVerificationTemplate({
-  name: user.name,
-  email: user.email,
-  otp,
-  link,
-}),
+    subject: "Verify Your PulseIQ Email",
+    html: getVerificationTemplate({ name: user.name, email: user.email, otp, link }),
   });
-
-  
 
   return user;
 };
 
+/* ═══════════════════════════════════════════
+   LOGIN
+═══════════════════════════════════════════ */
+
 export const loginUser = async ({ email, password, role }) => {
-  const user = await User.findOne({ email });
+  // ✅ FIX: .select("+refreshToken") — refreshToken has select:false in schema
+  const user = await User.findOne({ email }).select("+refreshToken");
 
-  // ❌ USER NOT FOUND
-  if (!user) {
-    throw { statusCode: 401, message: "Invalid credentials" };
-  }
+  if (!user) throw { statusCode: 401, message: "Invalid credentials" };
 
-  // ❌ ROLE CHECK FIRST
+  // Role check first
   if (!role || user.role !== role) {
-    throw {
-      statusCode: 403,
-      message: "Your role is not correct for this account",
-    };
+    throw { statusCode: 403, message: "Your role is not correct for this account" };
   }
 
-  // ❌ PASSWORD CHECK
+  // Password check
   const isMatch = await user.matchPassword(password);
-  if (!isMatch) {
-    throw { statusCode: 401, message: "Invalid credentials" };
-  }
+  if (!isMatch) throw { statusCode: 401, message: "Invalid credentials" };
 
-  // ❌ EMAIL VERIFY (SUPER_ADMIN KO SKIP)
+  // Email verify (SUPER_ADMIN skip karo)
   if (user.role !== "SUPER_ADMIN" && !user.emailVerified) {
-    throw {
-      statusCode: 403,
-      message: "EMAIL_NOT_VERIFIED",
-    };
+    throw { statusCode: 403, message: "EMAIL_NOT_VERIFIED" };
   }
 
-  // ❌ STATUS CHECK
+  // Status check
   if (user.status !== "ACTIVE") {
-    throw {
-      statusCode: 403,
-      message: "Account is not active",
-    };
+    throw { statusCode: 403, message: "Account is suspended or banned. Contact support." };
   }
 
-  // ❌ ORGANIZER APPROVAL
+  // Organizer approval check
   if (user.role === "ORGANIZER" && user.verificationStatus !== "VERIFIED") {
     throw {
       statusCode: 403,
-      message: "Organizer not approved yet",
+      message: "Organizer account not approved yet. Please wait for admin review.",
     };
   }
 
-  // ✅ TOKENS GENERATE
   const accessToken = generateAccessToken(user._id);
   const refreshToken = generateRefreshToken(user._id);
 
-  // ✅ SMART LOGIN ALERT (NO SPAM)
+  // ✅ Login alert email — non-blocking (don't crash login if email fails)
   if (!user.lastLoginAt || Date.now() - user.lastLoginAt > 5 * 60 * 1000) {
     try {
       await sendEmail({
         to: user.email,
-        subject: "New Login Alert 🔐",
+        subject: "New Login Detected 🔐 — PulseIQ",
         html: getLoginAlertTemplate({
           name: user.name,
           email: user.email,
-          ip: "Unknown",
-          device: "Browser",
+          time: new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }),
         }),
       });
-    } catch (err) {
-      console.log("Login alert email failed:", err.message);
+    } catch (_) {
+      // Silently ignore — don't block login
     }
   }
 
-  // ✅ SINGLE SAVE (IMPORTANT FIX)
   user.refreshToken = refreshToken;
   user.lastLoginAt = Date.now();
-
   await user.save();
 
-  // ✅ FINAL RETURN
   return { user, accessToken, refreshToken };
 };
-/* ================= GOOGLE ================= */
 
-export const googleLogin = async (token) => {
-  const ticket = await googleClient.verifyIdToken({
-    idToken: token,
-    audience: process.env.GOOGLE_CLIENT_ID,
-  });
+/* ═══════════════════════════════════════════
+   GOOGLE LOGIN
+   ✅ FIXED: Accepts object instead of raw token.
+   Token exchange + verification is done in auth.routes.js
+   This function only handles DB find/create logic.
+═══════════════════════════════════════════ */
 
-  const { email, name, picture } = ticket.getPayload();
-
-  let user = await User.findOne({ email });
+export const googleLogin = async ({ googleId, email, name, avatar, emailVerified }) => {
+  // Find by googleId OR email (handles existing users who signup via Google)
+  let user = await User.findOne({ $or: [{ googleId }, { email }] }).select("+refreshToken");
 
   if (!user) {
+    // New Google user — auto-verified, no password needed
     user = await User.create({
       name,
       email,
-      avatar: picture,
-      emailVerified: true,
+      googleId,
+      avatar,
+      role: "USER",
+      emailVerified: emailVerified !== false, // true unless explicitly false
       verificationStatus: "VERIFIED",
+      status: "ACTIVE",
     });
+
+    // Welcome email — non-blocking
+    try {
+      await sendEmail({
+        to: email,
+        subject: "Welcome to PulseIQ! 🚀",
+        html: getWelcomeTemplate({ name }),
+      });
+    } catch (_) {}
+  } else {
+    // Update missing Google info on existing user
+    let changed = false;
+    if (!user.googleId) { user.googleId = googleId; changed = true; }
+    if (!user.avatar && avatar) { user.avatar = avatar; changed = true; }
+    if (!user.emailVerified) { user.emailVerified = true; changed = true; }
+    // Don't save yet — will save after setting refreshToken below
+  }
+
+  if (user.status !== "ACTIVE") {
+    throw { statusCode: 403, message: "Account is suspended. Contact support." };
   }
 
   const accessToken = generateAccessToken(user._id);
   const refreshToken = generateRefreshToken(user._id);
 
   user.refreshToken = refreshToken;
+  user.lastLoginAt = Date.now();
   await user.save();
 
   return { user, accessToken, refreshToken };
 };
 
-/* ================= VERIFY ================= */
+/* ═══════════════════════════════════════════
+   VERIFY EMAIL — LINK
+═══════════════════════════════════════════ */
 
 export const verifyEmailByLink = async (token) => {
   const user = await User.findOne({
@@ -175,32 +185,18 @@ export const verifyEmailByLink = async (token) => {
     emailVerificationExpire: { $gt: Date.now() },
   });
 
-  if (!user) throw { statusCode: 400, message: "Invalid token" };
+  if (!user) throw { statusCode: 400, message: "Invalid or expired verification link" };
 
-  // ✅ prevent duplicate welcome emails
-  if (!user.emailVerified) {
-    user.emailVerified = true;
-    user.emailVerificationToken = null;
-    user.emailVerificationOTP = null;
-    user.emailVerificationExpire = null;
-
-    await user.save();
-
-    // ✅ SEND WELCOME EMAIL
-    try {
-      await sendEmail({
-        to: user.email,
-        subject: "Welcome to PulseIQ 🚀",
-        html: getWelcomeTemplate({
-          name: user.name,
-          email: user.email,
-        }),
-      });
-    } catch (err) {
-      console.log("Welcome email failed:", err.message);
-    }
-  }
+  user.emailVerified = true;
+  user.emailVerificationToken = null;
+  user.emailVerificationOTP = null;
+  user.emailVerificationExpire = null;
+  await user.save();
 };
+
+/* ═══════════════════════════════════════════
+   VERIFY EMAIL — OTP
+═══════════════════════════════════════════ */
 
 export const verifyEmailByOTP = async (email, otp) => {
   const user = await User.findOne({
@@ -209,97 +205,69 @@ export const verifyEmailByOTP = async (email, otp) => {
     emailVerificationExpire: { $gt: Date.now() },
   });
 
-  if (!user) {
-    throw { statusCode: 400, message: "Invalid or expired OTP" };
-  }
+  if (!user) throw { statusCode: 400, message: "Invalid or expired OTP" };
 
-  // ✅ prevent duplicate verification + email
-  if (!user.emailVerified) {
-    user.emailVerified = true;
-    user.emailVerificationOTP = null;
-    user.emailVerificationToken = null;
-    user.emailVerificationExpire = null;
-
-    await user.save();
-
-    // ✅ 🔥 SEND WELCOME EMAIL AFTER VERIFY
-    try {
-      await sendEmail({
-        to: user.email,
-        subject: "Welcome to PulseIQ 🚀",
-        html: getWelcomeTemplate({
-          name: user.name,
-          email: user.email,
-        }),
-      });
-    } catch (err) {
-      console.log("Welcome email failed:", err.message);
-    }
-  }
-
-  return user;
+  user.emailVerified = true;
+  user.emailVerificationToken = null;
+  user.emailVerificationOTP = null;
+  user.emailVerificationExpire = null;
+  await user.save();
 };
 
-
-
-/* ================= RESEND ================= */
+/* ═══════════════════════════════════════════
+   RESEND VERIFICATION
+═══════════════════════════════════════════ */
 
 export const resendVerification = async (email) => {
   const user = await User.findOne({ email });
   if (!user) throw { statusCode: 404, message: "User not found" };
+  if (user.emailVerified) throw { statusCode: 400, message: "Email is already verified" };
 
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
   const token = crypto.randomBytes(32).toString("hex");
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-  user.emailVerificationOTP = otp;
   user.emailVerificationToken = token;
+  user.emailVerificationOTP = otp;
   user.emailVerificationExpire = Date.now() + 10 * 60 * 1000;
-
   await user.save();
 
   const link = `${process.env.CLIENT_URL}/verify-email/${token}`;
 
   await sendEmail({
     to: email,
-    subject: "Resend Verification",
-    html: getVerificationTemplate({
-  name: user.name,
-  email: user.email,
-  otp,
-  link,
-}),
+    subject: "Resend: Verify Your PulseIQ Email",
+    html: getVerificationTemplate({ name: user.name, email: user.email, otp, link }),
   });
 };
 
-/* ================= FORGOT PASSWORD ================= */
+/* ═══════════════════════════════════════════
+   FORGOT PASSWORD
+═══════════════════════════════════════════ */
 
 export const forgotPassword = async (email) => {
   const user = await User.findOne({ email });
-  if (!user) throw { statusCode: 404, message: "User not found" };
+  if (!user) throw { statusCode: 404, message: "No account found with this email" };
 
   const token = crypto.randomBytes(32).toString("hex");
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
   user.resetPasswordToken = token;
   user.resetPasswordOTP = otp;
-  user.resetPasswordExpire = Date.now() + 10 * 60 * 1000;
-
+  user.resetPasswordExpire = Date.now() + 10 * 60 * 1000; // 10 min
   await user.save();
 
   const link = `${process.env.CLIENT_URL}/reset-password/${token}`;
 
   await sendEmail({
-  to: user.email,
-  subject: "Reset Password Request PulseIQ 🔐",
-  html: getForgotPasswordTemplate({
-    name: user.name,
-    email: user.email,
-    link,
-  }),
-});
+    to: user.email,
+    subject: "Reset Your PulseIQ Password 🔐",
+    html: getForgotPasswordTemplate({ name: user.name, email: user.email, otp, link }),
+  });
 };
 
-/* ================= RESET ================= */
+/* ═══════════════════════════════════════════
+   RESET PASSWORD — LINK
+═══════════════════════════════════════════ */
 
 export const resetPassword = async (token, password) => {
   const user = await User.findOne({
@@ -307,15 +275,18 @@ export const resetPassword = async (token, password) => {
     resetPasswordExpire: { $gt: Date.now() },
   });
 
-  if (!user) throw { statusCode: 400, message: "Invalid token" };
+  if (!user) throw { statusCode: 400, message: "Invalid or expired reset link" };
 
   user.password = password;
   user.resetPasswordToken = null;
   user.resetPasswordOTP = null;
   user.resetPasswordExpire = null;
-
   await user.save();
 };
+
+/* ═══════════════════════════════════════════
+   RESET PASSWORD — OTP
+═══════════════════════════════════════════ */
 
 export const resetPasswordByOTP = async (email, otp, password) => {
   const user = await User.findOne({
@@ -324,36 +295,43 @@ export const resetPasswordByOTP = async (email, otp, password) => {
     resetPasswordExpire: { $gt: Date.now() },
   });
 
-  if (!user) throw { statusCode: 400, message: "Invalid OTP" };
+  if (!user) throw { statusCode: 400, message: "Invalid or expired OTP" };
 
   user.password = password;
   user.resetPasswordToken = null;
   user.resetPasswordOTP = null;
   user.resetPasswordExpire = null;
-
   await user.save();
 };
 
-/* ================= LOGOUT ================= */
+/* ═══════════════════════════════════════════
+   LOGOUT
+═══════════════════════════════════════════ */
 
 export const logoutUser = async (id) => {
   await User.findByIdAndUpdate(id, { refreshToken: "" });
 };
 
+/* ═══════════════════════════════════════════
+   REFRESH ACCESS TOKEN
+═══════════════════════════════════════════ */
+
 export const refreshAccessToken = async (refreshToken) => {
+  if (!refreshToken) throw { statusCode: 401, message: "No refresh token provided" };
+
+  let decoded;
   try {
-    const decoded = jwt.verify(refreshToken, process.env.REFRESH_SECRET);
-
-    const user = await User.findById(decoded.id);
-
-    if (!user || user.refreshToken !== refreshToken) {
-      throw { statusCode: 401, message: "Invalid refresh token" };
-    }
-
-    return {
-      accessToken: generateAccessToken(user._id),
-    };
-  } catch (err) {
-    throw { statusCode: 401, message: "Invalid or expired token" };
+    decoded = jwt.verify(refreshToken, process.env.REFRESH_SECRET);
+  } catch {
+    throw { statusCode: 401, message: "Invalid or expired refresh token" };
   }
+
+  // ✅ FIX: .select("+refreshToken") to load the hidden field
+  const user = await User.findById(decoded.id).select("+refreshToken");
+
+  if (!user || user.refreshToken !== refreshToken) {
+    throw { statusCode: 401, message: "Refresh token mismatch. Please login again." };
+  }
+
+  return { accessToken: generateAccessToken(user._id) };
 };
