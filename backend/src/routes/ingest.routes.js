@@ -72,6 +72,17 @@ router.post("/event", async (req, res) => {
       });
     }
 
+    /* ===== AUTO VERIFY SDK ON FIRST EVENT ===== */
+    // Jaise hi pehla event aata hai, project sdkVerified ho jaata hai
+    // Analytics tab tab khulega
+
+    if (!project.sdkVerified) {
+      await Project.findByIdAndUpdate(project._id, {
+        sdkVerified:   true,
+        sdkVerifiedAt: new Date(),
+      });
+    }
+
     res.status(201).json({
       success: true,
       data: { id: event._id },

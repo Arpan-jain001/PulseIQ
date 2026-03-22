@@ -20,13 +20,6 @@ import { authLimiter } from "../middleware/rateLimit.middleware.js";
 
 const router = express.Router();
 
-// ✅ FIX: OAuth2Client with "postmessage" redirect — required for auth-code flow
-const googleClient = new OAuth2Client(
-  process.env.GOOGLE_CLIENT_ID,
-  process.env.GOOGLE_CLIENT_SECRET,
-  "postmessage"
-);
-
 /* ================= REGISTER ================= */
 router.post("/register", authLimiter, async (req, res) => {
   try {
@@ -97,8 +90,6 @@ router.post("/login", authLimiter, async (req, res) => {
 });
 
 /* ================= GOOGLE LOGIN (auth-code flow) ================= */
-// ✅ FIXED: Frontend sends `code` (not access_token/id_token)
-// Backend exchanges code → gets id_token → verifies → finds/creates user
 router.post("/google", authLimiter, async (req, res) => {
   try {
     const { code } = req.body;
@@ -106,6 +97,16 @@ router.post("/google", authLimiter, async (req, res) => {
     if (!code) {
       return res.status(400).json({ success: false, message: "Authorization code required" });
     }
+
+    // ✅ Client inside handler — env variables available yahan
+    const googleClient = new OAuth2Client(
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_CLIENT_SECRET,
+      "postmessage"
+    );
+
+    console.log("CLIENT_ID:", process.env.GOOGLE_CLIENT_ID?.slice(0, 20));
+    console.log("CLIENT_SECRET:", process.env.GOOGLE_CLIENT_SECRET?.slice(0, 10));
 
     // Step 1: Exchange auth code for tokens
     const { tokens } = await googleClient.getToken(code);
@@ -115,7 +116,7 @@ router.post("/google", authLimiter, async (req, res) => {
       return res.status(400).json({ success: false, message: "Failed to get ID token from Google" });
     }
 
-    // Step 2: Verify ID token and extract user info
+    // Step 2: Verify ID token
     const ticket = await googleClient.verifyIdToken({
       idToken,
       audience: process.env.GOOGLE_CLIENT_ID,

@@ -1,281 +1,257 @@
-// ✅ ULTRA PREMIUM EMAIL TEMPLATE (LINK + OTP + USER DETAILS)
+// backend/src/utils/emailTemplates.js — REPLACE existing file
 
-export const getVerificationTemplate = ({ name, email, otp, link }) => {
-  return `
-  <div style="margin:0;padding:0;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
-    
-    <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 0;">
-      <tr>
-        <td align="center">
-          
-          <!-- MAIN CARD -->
-          <table width="100%" style="max-width:520px;background:#ffffff;border-radius:18px;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,0.08);">
-            
-            <!-- HEADER -->
-            <tr>
-              <td style="background:linear-gradient(135deg,#6366f1,#8b5cf6,#06b6d4);padding:30px;text-align:center;color:white;">
-                
-                <img src="https://cdn-icons-png.flaticon.com/512/5968/5968672.png" width="50" style="margin-bottom:10px;" />
-                
-                <h1 style="margin:0;font-size:22px;font-weight:700;">PulseIQ</h1>
-                <p style="margin:5px 0 0;font-size:13px;opacity:0.9;">Secure Email Verification</p>
-              </td>
-            </tr>
+const YEAR = new Date().getFullYear();
+const BRAND_COLOR = "#10d990";
+const SUPPORT_EMAIL = "arpanjain00123@gmail.com";
 
-            <!-- BODY -->
-            <tr>
-              <td style="padding:30px;">
-                
-                <h2 style="margin:0 0 10px;color:#0f172a;font-size:20px;">
-                  Hey ${name || "User"} 👋
-                </h2>
+// ── Shared layout wrapper ─────────────────────────────
+const layout = (headerBg, headerContent, bodyContent) => `
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#0a0f1a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 16px;">
+    <tr><td align="center">
+      <table width="100%" style="max-width:540px;background:#060d18;border-radius:20px;overflow:hidden;border:1px solid #1a2a4a;box-shadow:0 24px 80px rgba(0,0,0,0.6);">
 
-                <p style="color:#475569;font-size:14px;line-height:1.6;margin-bottom:20px;">
-                  Welcome to <b>PulseIQ</b> 🚀<br/>
-                  Please verify your email to activate your account.
-                </p>
+        <!-- RAINBOW TOP BAR -->
+        <tr><td style="height:3px;background:linear-gradient(90deg,#10d990,#00e5ff,#a855f7,#f43f8e);"></td></tr>
 
-                <!-- USER INFO -->
-                <div style="
-                  background:#f8fafc;
-                  border:1px solid #e2e8f0;
-                  padding:12px 16px;
-                  border-radius:10px;
-                  margin-bottom:25px;
-                  font-size:13px;
-                  color:#334155;
-                ">
-                  <strong>Email:</strong> ${email}
-                </div>
+        <!-- HEADER -->
+        <tr>
+          <td style="background:${headerBg};padding:32px 30px;text-align:center;">
+            <!-- Logo -->
+            <div style="display:inline-flex;align-items:center;gap:10px;margin-bottom:16px;">
+              <div style="width:40px;height:40px;background:linear-gradient(135deg,#10d990,#00e5ff);border-radius:10px;display:flex;align-items:center;justify-content:center;">
+                <span style="font-size:20px;font-weight:900;color:#020408;">⚡</span>
+              </div>
+              <span style="font-size:22px;font-weight:900;color:#e8f4ff;letter-spacing:0.1em;text-transform:uppercase;">PulseIQ</span>
+            </div>
+            ${headerContent}
+          </td>
+        </tr>
 
-                <!-- VERIFY BUTTON -->
-                <div style="text-align:center;margin:30px 0;">
-                  <a href="${link}" 
-                    style="display:inline-block;padding:14px 28px;
-                    background:linear-gradient(135deg,#6366f1,#8b5cf6);
-                    color:#ffffff;font-weight:600;
-                    border-radius:999px;
-                    text-decoration:none;
-                    font-size:14px;
-                    box-shadow:0 8px 20px rgba(99,102,241,0.3);">
-                    Verify Email
-                  </a>
-                </div>
+        <!-- BODY -->
+        <tr>
+          <td style="padding:32px 30px;">
+            ${bodyContent}
+          </td>
+        </tr>
 
-                <!-- DIVIDER -->
-                <div style="text-align:center;margin:25px 0;color:#94a3b8;font-size:12px;">
-                  OR USE OTP
-                </div>
+        <!-- FOOTER -->
+        <tr>
+          <td style="background:#04080f;padding:20px 30px;border-top:1px solid #1a2a4a;text-align:center;">
+            <p style="margin:0 0 6px;font-size:11px;color:#3d6080;">© ${YEAR} PulseIQ Analytics. All rights reserved.</p>
+            <p style="margin:0;font-size:11px;color:#3d6080;">
+              Need help? <a href="mailto:${SUPPORT_EMAIL}" style="color:#10d990;text-decoration:none;">${SUPPORT_EMAIL}</a>
+            </p>
+          </td>
+        </tr>
 
-                <!-- OTP BOX -->
-                <div style="text-align:center;margin:20px 0;">
-                  <div style="
-                    display:inline-block;
-                    padding:16px 24px;
-                    background:#f8fafc;
-                    border:1px dashed #cbd5f5;
-                    border-radius:12px;
-                    font-size:26px;
-                    font-weight:bold;
-                    letter-spacing:8px;
-                    color:#1e293b;
-                  ">
-                    ${otp}
-                  </div>
-                </div>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
 
-                <!-- NOTE -->
-                <p style="text-align:center;font-size:12px;color:#64748b;margin-top:10px;">
-                  OTP valid for <b>10 minutes</b>
-                </p>
+// ── Info box ──────────────────────────────────────────
+const infoBox = (content, color = "#1a2a4a") =>
+  `<div style="background:#04080f;border:1px solid ${color};border-radius:12px;padding:16px 20px;margin:16px 0;font-size:13px;color:#8ab4d4;">${content}</div>`;
 
-                <!-- WARNING -->
-                <p style="font-size:12px;color:#ef4444;text-align:center;margin-top:15px;">
-                  ⚠️ Do not share this code with anyone
-                </p>
+// ── Badge ─────────────────────────────────────────────
+const badge = (text, color) =>
+  `<span style="display:inline-block;padding:4px 14px;background:${color}20;border:1px solid ${color}40;border-radius:999px;font-size:11px;font-weight:700;color:${color};letter-spacing:0.1em;text-transform:uppercase;">${text}</span>`;
 
-              </td>
-            </tr>
+// ── CTA Button ────────────────────────────────────────
+const btn = (text, href, color = "#10d990") =>
+  `<div style="text-align:center;margin:28px 0;">
+    <a href="${href}" style="display:inline-block;padding:14px 36px;background:linear-gradient(135deg,${color},${color}cc);color:#020408;font-weight:900;border-radius:999px;text-decoration:none;font-size:14px;letter-spacing:0.05em;box-shadow:0 8px 24px ${color}44;">${text} →</a>
+  </div>`;
 
-            <!-- FOOTER -->
-            <tr>
-              <td style="background:#f8fafc;padding:20px;text-align:center;font-size:12px;color:#64748b;">
-                
-                <p style="margin:0;">
-                  © ${new Date().getFullYear()} PulseIQ. All rights reserved.
-                </p>
-
-                <p style="margin:8px 0;">
-                  This email was sent to <b>${email}</b>
-                </p>
-
-                <p style="margin:8px 0;">
-                  Need help? 
-                  <a href="mailto:support@pulseiq.com" style="color:#6366f1;text-decoration:none;">
-                    Contact Support
-                  </a>
-                </p>
-
-                <p style="margin:0;color:#94a3b8;font-size:11px;">
-                  If you didn’t request this, you can ignore this email.
-                </p>
-
-              </td>
-            </tr>
-
-          </table>
-
-        </td>
-      </tr>
-    </table>
-
-  </div>
-  `;
-};
+// ── Row item ──────────────────────────────────────────
+const row = (label, value, valueColor = "#e8f4ff") =>
+  `<tr>
+    <td style="padding:8px 0;font-size:12px;color:#3d6080;font-weight:600;white-space:nowrap;padding-right:16px;">${label}</td>
+    <td style="padding:8px 0;font-size:12px;color:${valueColor};font-weight:700;">${value}</td>
+  </tr>`;
 
 
+// ══════════════════════════════════════════════════════
+// 1. EMAIL VERIFICATION
+// ══════════════════════════════════════════════════════
+export const getVerificationTemplate = ({ name, email, otp, link }) => layout(
+  "linear-gradient(135deg,#0a1628 0%,#0d1f3c 100%)",
+  `<p style="margin:0;font-size:12px;color:#10d990;text-transform:uppercase;letter-spacing:0.3em;">Email Verification</p>
+   <h1 style="margin:8px 0 0;font-size:24px;font-weight:900;color:#e8f4ff;">Verify Your Account</h1>`,
+  `<h2 style="margin:0 0 12px;color:#e8f4ff;font-size:18px;font-weight:700;">Hey ${name || "there"} 👋</h2>
+   <p style="color:#8ab4d4;font-size:14px;line-height:1.7;margin-bottom:20px;">
+     Welcome to <strong style="color:#10d990;">PulseIQ</strong> — your analytics platform. 
+     Please verify your email address to activate your account.
+   </p>
+   ${infoBox(`<strong style="color:#3d6080;">Email:</strong> <span style="color:#e8f4ff;">${email}</span>`)}
+   ${btn("Verify Email Address", link, "#10d990")}
+   <div style="text-align:center;margin:20px 0;">
+     <p style="font-size:12px;color:#3d6080;margin-bottom:12px;">OR enter this OTP manually</p>
+     <div style="display:inline-block;padding:18px 32px;background:#04080f;border:2px dashed #10d99040;border-radius:16px;font-size:32px;font-weight:900;letter-spacing:12px;color:#10d990;">${otp}</div>
+     <p style="font-size:11px;color:#3d6080;margin-top:10px;">⏱ Valid for <strong>10 minutes</strong></p>
+   </div>
+   <p style="text-align:center;font-size:12px;color:#f43f8e;">⚠️ Never share this code with anyone — PulseIQ will never ask for it.</p>`
+);
 
-// ✅ Forgot Password
 
-export const getForgotPasswordTemplate = ({ name, email, link }) => {
-  return `
-  <div style="background:#f1f5f9;padding:40px;font-family:sans-serif;">
-    <table width="100%" style="max-width:520px;margin:auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 20px 40px rgba(0,0,0,0.08);">
+// ══════════════════════════════════════════════════════
+// 2. FORGOT PASSWORD
+// ══════════════════════════════════════════════════════
+export const getForgotPasswordTemplate = ({ name, email, link }) => layout(
+  "linear-gradient(135deg,#1a0a0a 0%,#2d0f0f 100%)",
+  `<p style="margin:0;font-size:12px;color:#f43f8e;text-transform:uppercase;letter-spacing:0.3em;">Password Reset</p>
+   <h1 style="margin:8px 0 0;font-size:24px;font-weight:900;color:#e8f4ff;">Reset Your Password</h1>`,
+  `<h2 style="margin:0 0 12px;color:#e8f4ff;font-size:18px;font-weight:700;">Hey ${name || "there"} 👋</h2>
+   <p style="color:#8ab4d4;font-size:14px;line-height:1.7;margin-bottom:20px;">
+     We received a password reset request for your PulseIQ account. Click the button below to set a new password.
+   </p>
+   ${infoBox(`<strong style="color:#3d6080;">Account:</strong> <span style="color:#e8f4ff;">${email}</span>`, "#f43f8e40")}
+   ${btn("Reset My Password", link, "#f43f8e")}
+   <p style="text-align:center;font-size:12px;color:#3d6080;">⏱ This link expires in <strong style="color:#f59e0b;">10 minutes</strong></p>
+   <p style="text-align:center;font-size:12px;color:#f43f8e;margin-top:8px;">⚠️ If you didn't request this, please ignore this email. Your password won't change.</p>`
+);
 
-      <tr>
-        <td style="background:linear-gradient(135deg,#ef4444,#f97316);padding:25px;text-align:center;color:#fff;">
-          <h2 style="margin:0;">Reset Your Password 🔐</h2>
-        </td>
-      </tr>
 
-      <tr>
-        <td style="padding:30px;">
-          <h3>Hey ${name || "User"} 👋</h3>
-          <p>You requested a password reset for:</p>
+// ══════════════════════════════════════════════════════
+// 3. LOGIN ALERT
+// ══════════════════════════════════════════════════════
+export const getLoginAlertTemplate = ({ name, email, ip, device }) => layout(
+  "linear-gradient(135deg,#0a1020 0%,#0d1830 100%)",
+  `<p style="margin:0;font-size:12px;color:#00e5ff;text-transform:uppercase;letter-spacing:0.3em;">Security Alert</p>
+   <h1 style="margin:8px 0 0;font-size:24px;font-weight:900;color:#e8f4ff;">New Login Detected</h1>`,
+  `<h2 style="margin:0 0 12px;color:#e8f4ff;font-size:18px;font-weight:700;">Hey ${name || "there"} 👋</h2>
+   <p style="color:#8ab4d4;font-size:14px;line-height:1.7;margin-bottom:20px;">
+     A new login was detected on your PulseIQ account. Here are the details:
+   </p>
+   ${infoBox(`<table style="width:100%;border-collapse:collapse;">
+     ${row("Account", email)}
+     ${row("IP Address", ip || "Unknown")}
+     ${row("Device", device || "Unknown")}
+     ${row("Time", new Date().toLocaleString())}
+   </table>`, "#00e5ff40")}
+   <p style="text-align:center;font-size:13px;color:#8ab4d4;margin-top:8px;">If this was you — no action needed. ✅</p>
+   <p style="text-align:center;font-size:12px;color:#f43f8e;">⚠️ If this wasn't you, reset your password immediately.</p>`
+);
 
-          <div style="background:#f8fafc;padding:10px;border-radius:8px;margin:10px 0;">
-            <b>${email}</b>
-          </div>
 
-          <div style="text-align:center;margin:25px 0;">
-            <a href="${link}" style="padding:12px 24px;background:#ef4444;color:white;border-radius:999px;text-decoration:none;">
-              Reset Password
-            </a>
-          </div>
+// ══════════════════════════════════════════════════════
+// 4. WELCOME EMAIL
+// ══════════════════════════════════════════════════════
+export const getWelcomeTemplate = ({ name, email }) => layout(
+  "linear-gradient(135deg,#061a0f 0%,#0a2015 100%)",
+  `<p style="margin:0;font-size:12px;color:#10d990;text-transform:uppercase;letter-spacing:0.3em;">Welcome Aboard</p>
+   <h1 style="margin:8px 0 0;font-size:24px;font-weight:900;color:#e8f4ff;">You're In! 🎉</h1>`,
+  `<h2 style="margin:0 0 12px;color:#e8f4ff;font-size:18px;font-weight:700;">Welcome to PulseIQ, ${name || "there"}! 🚀</h2>
+   <p style="color:#8ab4d4;font-size:14px;line-height:1.7;margin-bottom:20px;">
+     Your account has been successfully created. You now have access to powerful analytics tools to track and grow your product.
+   </p>
+   ${infoBox(`<strong style="color:#3d6080;">Account:</strong> <span style="color:#e8f4ff;">${email}</span>`, "#10d99040")}
+   <div style="margin:20px 0;">
+     <p style="font-size:13px;color:#8ab4d4;margin-bottom:12px;font-weight:600;">What you can do with PulseIQ:</p>
+     ${["📊 Track real-time events & user behavior", "🔐 Secure API key per project", "⚡ DAU, funnels, top events & more", "👥 Invite team members to workspaces"].map(f =>
+       `<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:#04080f;border-radius:10px;margin-bottom:8px;font-size:13px;color:#8ab4d4;">${f}</div>`
+     ).join("")}
+   </div>
+   <p style="text-align:center;font-size:13px;color:#3d6080;">Get started by creating your first workspace and project.</p>`
+);
 
-          <p style="font-size:12px;color:#64748b;">
-            This link is valid for 10 minutes.
-          </p>
 
-          <p style="color:#ef4444;font-size:12px;">
-            ⚠️ If you didn’t request this, ignore this email.
-          </p>
-        </td>
-      </tr>
+// ══════════════════════════════════════════════════════
+// 5. NEW ADMIN CREDENTIALS  ← NEW
+// ══════════════════════════════════════════════════════
+export const getNewAdminTemplate = ({ name, email, password, createdBy }) => layout(
+  "linear-gradient(135deg,#1a0a1a 0%,#200a2a 100%)",
+  `<p style="margin:0;font-size:12px;color:#f43f8e;text-transform:uppercase;letter-spacing:0.3em;">Admin Access Granted</p>
+   <h1 style="margin:8px 0 0;font-size:24px;font-weight:900;color:#e8f4ff;">You're Now an Admin ⚡</h1>`,
+  `<h2 style="margin:0 0 12px;color:#e8f4ff;font-size:18px;font-weight:700;">Hey ${name} 👋</h2>
+   <p style="color:#8ab4d4;font-size:14px;line-height:1.7;margin-bottom:20px;">
+     <strong style="color:#f43f8e;">${createdBy || "Super Admin"}</strong> has granted you 
+     <strong style="color:#f43f8e;">Super Admin</strong> access on PulseIQ. 
+     Use the credentials below to log in.
+   </p>
 
-      <tr>
-        <td style="background:#f8fafc;padding:15px;text-align:center;font-size:12px;">
-          © ${new Date().getFullYear()} PulseIQ
-        </td>
-      </tr>
+   <!-- Credentials Card -->
+   <div style="background:#04080f;border:1px solid #f43f8e30;border-radius:16px;padding:20px;margin:16px 0;">
+     <p style="margin:0 0 14px;font-size:11px;color:#f43f8e;text-transform:uppercase;letter-spacing:0.2em;font-weight:700;">🔐 Your Login Credentials</p>
+     <table style="width:100%;border-collapse:collapse;">
+       ${row("Name",     name,     "#e8f4ff")}
+       ${row("Email",    email,    "#00e5ff")}
+       ${row("Password", `<code style="background:#0a0f1a;padding:3px 10px;border-radius:6px;font-size:13px;color:#10d990;letter-spacing:0.05em;">${password}</code>`, "#10d990")}
+       ${row("Role",     badge("SUPER_ADMIN", "#f43f8e"), "#f43f8e")}
+     </table>
+   </div>
 
-    </table>
-  </div>
-  `;
-};
+   <div style="background:#f43f8e08;border:1px solid #f43f8e30;border-radius:12px;padding:14px 18px;margin:16px 0;">
+     <p style="margin:0;font-size:12px;color:#f43f8e;">
+       ⚠️ <strong>Important:</strong> Change your password immediately after your first login for security.
+     </p>
+   </div>
+   <p style="text-align:center;font-size:12px;color:#3d6080;">This email contains sensitive information — do not share it.</p>`
+);
 
-// Login Alert
 
-export const getLoginAlertTemplate = ({ name, email, ip, device }) => {
-  return `
-  <div style="background:#f1f5f9;padding:40px;font-family:sans-serif;">
-    <table width="100%" style="max-width:520px;margin:auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 20px 40px rgba(0,0,0,0.08);">
+// ══════════════════════════════════════════════════════
+// 6. ADMIN REMOVED  ← NEW
+// ══════════════════════════════════════════════════════
+export const getAdminRemovedTemplate = ({ name, email, removedBy, reason }) => layout(
+  "linear-gradient(135deg,#1a1008 0%,#251508 100%)",
+  `<p style="margin:0;font-size:12px;color:#f59e0b;text-transform:uppercase;letter-spacing:0.3em;">Admin Access Revoked</p>
+   <h1 style="margin:8px 0 0;font-size:24px;font-weight:900;color:#e8f4ff;">Access Removed</h1>`,
+  `<h2 style="margin:0 0 12px;color:#e8f4ff;font-size:18px;font-weight:700;">Hey ${name} 👋</h2>
+   <p style="color:#8ab4d4;font-size:14px;line-height:1.7;margin-bottom:20px;">
+     Your <strong style="color:#f43f8e;">Super Admin</strong> privileges on PulseIQ have been revoked by 
+     <strong style="color:#f59e0b;">${removedBy || "Super Admin"}</strong>.
+     Your account still exists as a regular USER.
+   </p>
 
-      <tr>
-        <td style="background:linear-gradient(135deg,#06b6d4,#3b82f6);padding:25px;text-align:center;color:#fff;">
-          <h2 style="margin:0;">New Login Detected 🔐</h2>
-        </td>
-      </tr>
+   <div style="background:#04080f;border:1px solid #f59e0b30;border-radius:16px;padding:20px;margin:16px 0;">
+     <p style="margin:0 0 14px;font-size:11px;color:#f59e0b;text-transform:uppercase;letter-spacing:0.2em;font-weight:700;">📋 Details</p>
+     <table style="width:100%;border-collapse:collapse;">
+       ${row("Name",       name,                         "#e8f4ff")}
+       ${row("Email",      email,                        "#8ab4d4")}
+       ${row("Removed By", removedBy || "Super Admin",  "#f59e0b")}
+       ${row("New Role",   badge("USER", "#3d6080"),     "#3d6080")}
+       ${row("Date",       new Date().toLocaleString(),  "#3d6080")}
+     </table>
+   </div>
 
-      <tr>
-        <td style="padding:30px;">
-          <h3>Hey ${name || "User"} 👋</h3>
+   ${reason ? `
+   <div style="background:#f59e0b08;border:1px solid #f59e0b30;border-radius:12px;padding:16px 20px;margin:16px 0;">
+     <p style="margin:0 0 8px;font-size:11px;color:#f59e0b;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;">Reason</p>
+     <p style="margin:0;font-size:13px;color:#8ab4d4;line-height:1.6;">${reason}</p>
+   </div>` : ""}
 
-          <p>We detected a new login to your account:</p>
+   <p style="font-size:13px;color:#8ab4d4;line-height:1.7;margin-top:16px;">
+     Your account remains active. You can still log in and use PulseIQ as a regular user. 
+     If you believe this was a mistake, please contact your system administrator.
+   </p>
+   <p style="text-align:center;font-size:12px;color:#3d6080;margin-top:8px;">
+     Questions? <a href="mailto:${SUPPORT_EMAIL}" style="color:#10d990;text-decoration:none;">Contact Support</a>
+   </p>`
+);
 
-          <div style="background:#f8fafc;padding:15px;border-radius:10px;">
-            <p><b>Email:</b> ${email}</p>
-            <p><b>IP:</b> ${ip || "Unknown"}</p>
-            <p><b>Device:</b> ${device || "Unknown"}</p>
-          </div>
 
-          <p style="margin-top:20px;">
-            If this was you, no action needed.
-          </p>
-
-          <p style="color:#ef4444;font-size:13px;">
-            ⚠️ If not, please reset your password immediately.
-          </p>
-        </td>
-      </tr>
-
-      <tr>
-        <td style="background:#f8fafc;padding:15px;text-align:center;font-size:12px;">
-          © ${new Date().getFullYear()} PulseIQ Security Team
-        </td>
-      </tr>
-
-    </table>
-  </div>
-  `;
-};
-
-// Welcome Email
-
-export const getWelcomeTemplate = ({ name, email }) => {
-  return `
-  <div style="background:#f1f5f9;padding:40px;font-family:sans-serif;">
-    <table width="100%" style="max-width:520px;margin:auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 20px 40px rgba(0,0,0,0.08);">
-
-      <tr>
-        <td style="background:linear-gradient(135deg,#10b981,#06b6d4);padding:25px;text-align:center;color:#fff;">
-          <h2 style="margin:0;">Welcome to PulseIQ 🚀</h2>
-        </td>
-      </tr>
-
-      <tr>
-        <td style="padding:30px;">
-          <h3>Hey ${name || "User"} 👋</h3>
-
-          <p>🎉 Your account has been successfully created!</p>
-
-          <div style="background:#f8fafc;padding:12px;border-radius:8px;">
-            <b>${email}</b>
-          </div>
-
-          <p style="margin-top:20px;">
-            You can now explore all features of PulseIQ:
-          </p>
-
-          <ul style="font-size:14px;color:#475569;">
-            <li>📊 Analytics Dashboard</li>
-            <li>🔐 Secure Authentication</li>
-            <li>⚡ Real-time Insights</li>
-          </ul>
-
-          <p style="margin-top:20px;">
-            Let's get started 🚀
-          </p>
-        </td>
-      </tr>
-
-      <tr>
-        <td style="background:#f8fafc;padding:15px;text-align:center;font-size:12px;">
-          © ${new Date().getFullYear()} PulseIQ Team
-        </td>
-      </tr>
-
-    </table>
-  </div>
-  `;
-};
+// ══════════════════════════════════════════════════════
+// 7. WORKSPACE INVITE (existing — upgraded)
+// ══════════════════════════════════════════════════════
+export const getWorkspaceInviteTemplate = ({ userName, userEmail, inviterName, workspaceName, role, frontendUrl }) => layout(
+  "linear-gradient(135deg,#061a0f 0%,#0a2015 100%)",
+  `<p style="margin:0;font-size:12px;color:#10d990;text-transform:uppercase;letter-spacing:0.3em;">Workspace Invite</p>
+   <h1 style="margin:8px 0 0;font-size:24px;font-weight:900;color:#e8f4ff;">You're Invited! 🎉</h1>`,
+  `<h2 style="margin:0 0 12px;color:#e8f4ff;font-size:18px;font-weight:700;">Hey ${userName} 👋</h2>
+   <p style="color:#8ab4d4;font-size:14px;line-height:1.7;margin-bottom:20px;">
+     <strong style="color:#10d990;">${inviterName}</strong> has invited you to collaborate on a workspace.
+   </p>
+   <div style="background:#04080f;border:1px solid #10d99030;border-radius:16px;padding:20px;margin:16px 0;text-align:center;">
+     <p style="margin:0 0 6px;font-size:11px;color:#3d6080;text-transform:uppercase;letter-spacing:0.2em;">Workspace</p>
+     <p style="margin:0 0 12px;font-size:22px;font-weight:900;color:#e8f4ff;">${workspaceName}</p>
+     ${badge(role || "MEMBER", "#a855f7")}
+   </div>
+   ${btn("Open Workspace", frontendUrl || "https://pulseiq.io/dashboard", "#10d990")}
+   <p style="text-align:center;font-size:12px;color:#3d6080;">Log in to your PulseIQ account to access this workspace.</p>`
+);
