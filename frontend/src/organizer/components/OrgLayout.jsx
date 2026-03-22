@@ -1,5 +1,5 @@
 // src/organizer/components/OrgLayout.jsx
-import OrgNavbar from "./Orgnavbar";
+import OrgNavbar from "./OrgNavbar";  // ✅ sahi
 import { motion } from "framer-motion";
 import { Zap, Activity } from "lucide-react";
 
