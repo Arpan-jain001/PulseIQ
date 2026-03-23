@@ -9,6 +9,7 @@ import { useWarmup } from "./hooks/useWarmup.js";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import HelpCenter from "./pages/HelpCenter";
 import NotFound from "./pages/NotFound";
 
 // Verify flow
@@ -69,6 +70,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/help" element={<HelpCenter />} />
 
           {/* Email verify */}
           <Route path="/verify-email" element={<VerifyEmail />} />

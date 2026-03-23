@@ -253,8 +253,14 @@ const Login = () => {
     if (!isMountedRef.current || showSuccess) return;
     abortControllerRef.current = new AbortController();
     try {
+      // ✅ Pass redirectUri for mobile redirect flow
+      const isMobileFlow = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+      const payload = {
+        code: tokenResponse.code,
+        ...(isMobileFlow ? { redirectUri: window.location.origin + "/login" } : {}),
+      };
       const { data } = await axios.post(`${BASE_API_URL}/api/auth/google`,
-        { code: tokenResponse.code },
+        payload,
         { signal: abortControllerRef.current.signal, timeout: LOGIN_TIMEOUT_MS }
       );
       if (data.success) { saveAuth(data.accessToken, data.refreshToken); await successFlow(data.user); }
@@ -266,7 +272,16 @@ const Login = () => {
     }
   }, [showSuccess, saveAuth, successFlow, resetLoading, fireToast]);
 
-  const googleLogin = useGoogleLogin({ onSuccess: handleGoogleSuccess, onError: handleGoogleError, flow: "auth-code" });
+  // ✅ Detect mobile — use redirect flow to avoid popup blocking
+  const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+
+  const googleLogin = useGoogleLogin({
+    onSuccess:  handleGoogleSuccess,
+    onError:    handleGoogleError,
+    flow:       "auth-code",
+    ux_mode:    isMobile ? "redirect" : "popup",
+    redirect_uri: isMobile ? window.location.origin + "/login" : undefined,
+  });
 
   const handleGoogleClick = useCallback(() => {
     if (isLoading || showSuccess) return;
@@ -571,4 +586,4 @@ const Login = () => {
   );
 };
 
-export default Login;   
+export default Login;

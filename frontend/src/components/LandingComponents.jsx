@@ -508,6 +508,7 @@ const FOOTER_COLS = [
     title: "Company",
     links: [
       { label: "Team",        href: "#team" },
+      { label: "Help Center", to: "/help" },
       { label: "Blog — Soon" },
       { label: "Careers" },
     ],

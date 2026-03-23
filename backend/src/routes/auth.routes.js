@@ -1,3 +1,5 @@
+// backend/src/routes/auth.routes.js
+// Path: E:\PulseIQ\backend\src\routes\auth.routes.js
 import express from "express";
 import jwt from "jsonwebtoken";
 import { OAuth2Client } from "google-auth-library";
@@ -89,24 +91,26 @@ router.post("/login", authLimiter, async (req, res) => {
   }
 });
 
-/* ================= GOOGLE LOGIN (auth-code flow) ================= */
+/* ================= GOOGLE LOGIN ================= */
+// ✅ Supports both:
+//    - Desktop popup flow (postmessage)
+//    - Mobile redirect flow (window.location.origin + "/login")
 router.post("/google", authLimiter, async (req, res) => {
   try {
-    const { code } = req.body;
+    const { code, redirectUri } = req.body;
 
     if (!code) {
       return res.status(400).json({ success: false, message: "Authorization code required" });
     }
 
-    // ✅ Client inside handler — env variables available yahan
+    // Use redirectUri from frontend if provided (mobile), else default to postmessage (desktop)
+    const resolvedRedirectUri = redirectUri || "postmessage";
+
     const googleClient = new OAuth2Client(
       process.env.GOOGLE_CLIENT_ID,
       process.env.GOOGLE_CLIENT_SECRET,
-      "postmessage"
+      resolvedRedirectUri
     );
-
-    console.log("CLIENT_ID:", process.env.GOOGLE_CLIENT_ID?.slice(0, 20));
-    console.log("CLIENT_SECRET:", process.env.GOOGLE_CLIENT_SECRET?.slice(0, 10));
 
     // Step 1: Exchange auth code for tokens
     const { tokens } = await googleClient.getToken(code);
@@ -126,10 +130,10 @@ router.post("/google", authLimiter, async (req, res) => {
 
     // Step 3: Find or create user in DB
     const { user, accessToken, refreshToken } = await googleLogin({
-      googleId: payload.sub,
-      email: payload.email,
-      name: payload.name,
-      avatar: payload.picture,
+      googleId:      payload.sub,
+      email:         payload.email,
+      name:          payload.name,
+      avatar:        payload.picture,
       emailVerified: payload.email_verified,
     });
 
@@ -138,10 +142,10 @@ router.post("/google", authLimiter, async (req, res) => {
       accessToken,
       refreshToken,
       user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
+        id:     user._id,
+        name:   user.name,
+        email:  user.email,
+        role:   user.role,
         avatar: user.avatar,
       },
     });

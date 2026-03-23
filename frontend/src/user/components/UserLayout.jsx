@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { LayoutDashboard, Bell, User, Settings, LogOut, Menu, X, Zap, Activity, Building2 } from "lucide-react";
+import { LayoutDashboard, Bell, User, Settings, LogOut, Menu, X, Zap, Activity, Building2, HelpCircle } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 
 const NAV = [

@@ -1,6 +1,5 @@
 // backend/src/routes/admin.user.routes.js — REPLACE existing file
 import express from "express";
-import bcrypt from "bcryptjs";
 import { protect } from "../middleware/auth.middleware.js";
 import { superAdminOnly } from "../middleware/superAdmin.middleware.js";
 import User from "../models/User.js";
@@ -36,11 +35,11 @@ router.post("/create-admin", protect, superAdminOnly, async (req, res) => {
       return res.status(409).json({ success: false, message: "User with this email already exists." });
     }
 
-    const hashed = await bcrypt.hash(password, 12);
+    // ✅ DO NOT hash manually — User model pre("save") hook handles hashing
     const newAdmin = await User.create({
       name,
       email:          email.toLowerCase().trim(),
-      password:       hashed,
+      password,       // raw password — pre-save hook will hash it
       role:           "SUPER_ADMIN",
       emailVerified:  true,
       status:         "ACTIVE",

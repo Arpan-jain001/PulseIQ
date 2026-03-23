@@ -4,7 +4,7 @@ import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard, Users, Building2, ShieldCheck,
-  Bell, Settings, LogOut, Menu, X, Zap, UserPlus, FolderKanban
+  Bell, Settings, LogOut, Menu, X, Zap, UserPlus, FolderKanban, HelpCircle
 } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 
@@ -18,6 +18,7 @@ const NAV_ITEMS = [
   { icon: UserPlus,        label: "Admins",        path: "/admin-dashboard/admins" },
   { icon: Bell,            label: "Notifications", path: "/admin-dashboard/notifications" },
   { icon: Settings,        label: "Settings",      path: "/admin-dashboard/settings" },
+  { icon: HelpCircle,      label: "Help",           path: "/help" },
 ];
 
 const AdminLogo = () => (
