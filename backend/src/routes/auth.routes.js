@@ -113,7 +113,11 @@ router.post("/google", authLimiter, async (req, res) => {
     );
 
     // Step 1: Exchange auth code for tokens
-    const { tokens } = await googleClient.getToken(code);
+   // Step 1: Exchange auth code for tokens
+const { tokens } = await googleClient.getToken({
+  code,
+  redirect_uri: resolvedRedirectUri,
+}); 
     const idToken = tokens.id_token;
 
     if (!idToken) {
