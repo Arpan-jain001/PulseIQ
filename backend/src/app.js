@@ -65,11 +65,9 @@ app.use(cookieParser());
 
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "https://pulseiqai.netlify.app",
-    ],
-    credentials: true,
+    origin: true, // auto allow
+    methods: ["GET", "POST", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "x-api-key"],
   })
 );
 
