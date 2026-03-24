@@ -185,18 +185,6 @@ const Login = () => {
     else navigate("/dashboard");
   }, [user, navigate]);
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const code = params.get("code");
-
-    if (code) {
-      setIsLoading(true);
-      setLoadingText("Completing Google login...");
-      handleGoogleSuccess({ code });
-      window.history.replaceState({}, document.title, "/login");
-    }
-  }, [handleGoogleSuccess]);
-
   const fireToast = useCallback((type, message) => {
     if (!isMountedRef.current) return;
     setToast({ type, message });
@@ -283,6 +271,18 @@ const Login = () => {
       setError(msg); fireToast("error", msg); resetLoading();
     }
   }, [showSuccess, saveAuth, successFlow, resetLoading, fireToast]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get("code");
+
+    if (code) {
+      setIsLoading(true);
+      setLoadingText("Completing Google login...");
+      handleGoogleSuccess({ code });
+      window.history.replaceState({}, document.title, "/login");
+    }
+  }, [handleGoogleSuccess]);
 
   // ✅ Detect mobile — use redirect flow to avoid popup blocking
   const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
