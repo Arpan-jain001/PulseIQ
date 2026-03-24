@@ -213,7 +213,7 @@ const Login = () => {
     setIsLoading(false);
     setShowSuccess(true);
     fireToast("success", "Welcome back! Login successful.");
-    await new Promise((r) => setTimeout(r, 1300));
+    await new Promise((r) => setTimeout(r, 500));
     if (!isMountedRef.current) return;
     setShowSuccess(false);
     if (userData.role === "SUPER_ADMIN") navigate("/admin-dashboard");
@@ -261,7 +261,11 @@ const Login = () => {
       };
       const { data } = await axios.post(`${BASE_API_URL}/api/auth/google`,
         payload,
-        { signal: abortControllerRef.current.signal, timeout: LOGIN_TIMEOUT_MS }
+        { 
+          headers: { "Content-Type": "application/json" },
+          signal: abortControllerRef.current.signal, 
+          timeout: LOGIN_TIMEOUT_MS 
+        }
       );
       if (data.success) { saveAuth(data.accessToken, data.refreshToken); await successFlow(data.user); }
     } catch (err) {
