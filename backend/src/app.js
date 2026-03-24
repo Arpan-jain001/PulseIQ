@@ -65,9 +65,10 @@ app.use(cookieParser());
 
 app.use(
   cors({
-    origin: true, // auto allow
-    methods: ["GET", "POST", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "x-api-key"],
+    origin: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "x-api-key"],
+    credentials: true,
   })
 );
 
