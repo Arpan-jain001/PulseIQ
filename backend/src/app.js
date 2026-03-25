@@ -23,7 +23,7 @@ import aiRoutes from "./routes/ai.routes.js";
 
 import userRoutes from "./routes/user.routes.js";
 import eventRoutes from "./routes/event.routes.js";
-
+import resendWebhookRoutes from "./routes/resendWebhook.routes.js";
 /* ===== ADMIN ROUTES ===== */
 
 import adminRoutes from "./routes/admin.routes.js";
@@ -111,7 +111,7 @@ app.use("/api/users", userRoutes);
 
 // 📅 EVENTS
 app.use("/api/events", eventRoutes);
-
+app.use("/api/webhook", resendWebhookRoutes);
 /* ===== ADMIN ROUTES ===== */
 
 app.use("/api/admin", adminRoutes);
