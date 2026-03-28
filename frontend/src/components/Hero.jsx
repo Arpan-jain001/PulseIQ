@@ -328,16 +328,18 @@ const Hero = () => {
                 </motion.button>
               </Link>
 
-              <motion.button
-                whileHover={{ scale: 1.02, borderColor: "#00e5ff44" }}
-                whileTap={{ scale: 0.97 }}
-                className="w-full sm:w-auto px-6 sm:px-8 py-3.5 sm:py-4 bg-transparent border border-[#0d2140] text-[#8ab4d4] hover:text-[#00e5ff] font-bold rounded-xl uppercase tracking-widest text-xs sm:text-sm transition-colors duration-300"
-                style={{ fontFamily: "var(--font-mono)" }}
-              >
-                <span className="flex items-center justify-center gap-2">
-                  <Terminal className="w-4 h-4" /> View Demo
-                </span>
-              </motion.button>
+              <Link to="/demo" className="w-full sm:w-auto">
+  <motion.button
+    whileHover={{ scale: 1.02, borderColor: "#00e5ff44" }}
+    whileTap={{ scale: 0.97 }}
+    className="w-full sm:w-auto px-6 sm:px-8 py-3.5 sm:py-4 bg-transparent border border-[#0d2140] text-[#8ab4d4] hover:text-[#00e5ff] font-bold rounded-xl uppercase tracking-widest text-xs sm:text-sm transition-colors duration-300"
+    style={{ fontFamily: "var(--font-mono)" }}
+  >
+    <span className="flex items-center justify-center gap-2">
+      <Terminal className="w-4 h-4" /> View Demo
+    </span>
+  </motion.button>
+</Link>
             </motion.div>
 
             {/* Metrics row */}

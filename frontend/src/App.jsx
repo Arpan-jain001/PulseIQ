@@ -8,6 +8,7 @@ import { useWarmup } from "./hooks/useWarmup.js";
 // Pages
 import Index from "./pages/Index";
 import Login from "./pages/Login";
+import Demo from "./pages/Demo";
 import Signup from "./pages/Signup";
 import HelpCenter from "./pages/HelpCenter";
 import NotFound from "./pages/NotFound";
@@ -68,6 +69,7 @@ const App = () => (
         <Routes>
           {/* Public */}
           <Route path="/" element={<Index />} />
+          <Route path="/demo" element={<Demo />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/help" element={<HelpCenter />} />
