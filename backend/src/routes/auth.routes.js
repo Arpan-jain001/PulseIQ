@@ -16,7 +16,8 @@ import {
   resetPassword,
   resetPasswordByOTP,
 } from "../services/auth.service.js";
-
+import crypto from "crypto";
+import User from "../models/User.js";
 import { protect } from "../middleware/auth.middleware.js";
 import { authLimiter } from "../middleware/rateLimit.middleware.js";
 
@@ -64,11 +65,20 @@ router.post("/login", authLimiter, async (req, res) => {
   try {
     const { email, password, role } = req.body;
 
-    const { user, accessToken, refreshToken } = await loginUser({
-      email,
-      password,
-      role,
-    });
+    const ip =
+  req.headers["x-forwarded-for"]?.split(",")[0] ||
+  req.socket?.remoteAddress ||
+  req.ip;
+
+const userAgent = req.headers["user-agent"];
+
+const { user, accessToken, refreshToken } = await loginUser({
+  email,
+  password,
+  role,
+  ip,
+  userAgent,
+});
 
     res.json({
       success: true,
@@ -88,6 +98,51 @@ router.post("/login", authLimiter, async (req, res) => {
       success: false,
       message: e.message || "Login failed",
     });
+  }
+});
+
+router.get("/verify-login/:token", async (req, res) => {
+  try {
+    const { token } = req.params;
+    const { action } = req.query;
+
+    const hashedToken = crypto
+      .createHash("sha256")
+      .update(token)
+      .digest("hex");
+
+    const user = await User.findOne({
+      loginAlertToken: hashedToken,
+      loginAlertExpire: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res.send("Invalid or expired link ❌");
+    }
+
+    // ❌ NOT ME → FORCE LOGOUT
+    if (action === "block") {
+      user.refreshToken = "";
+      user.loginAlertToken = null;
+      user.loginAlertExpire = null;
+      await user.save();
+
+      // 🔥 redirect to reset password page
+      return res.redirect(`${process.env.CLIENT_URL}/reset-password`);
+    }
+
+    // ✅ SAFE
+    if (action === "allow") {
+      user.loginAlertToken = null;
+      user.loginAlertExpire = null;
+      await user.save();
+
+      return res.send("Login confirmed ✅");
+    }
+
+    res.send("Invalid action");
+  } catch (e) {
+    res.send("Something went wrong");
   }
 });
 

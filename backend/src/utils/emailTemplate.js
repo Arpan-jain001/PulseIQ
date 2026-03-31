@@ -134,24 +134,71 @@ export const getForgotPasswordTemplate = ({ name, email, link, otp }) => layout(
 // ══════════════════════════════════════════════════════
 // 3. LOGIN ALERT
 // ══════════════════════════════════════════════════════
-export const getLoginAlertTemplate = ({ name, email, ip, device }) => layout(
-  "linear-gradient(135deg,#0a1020 0%,#0d1830 100%)",
-  `<p style="margin:0;font-size:12px;color:#00e5ff;text-transform:uppercase;letter-spacing:0.3em;">Security Alert</p>
-   <h1 style="margin:8px 0 0;font-size:24px;font-weight:900;color:#e8f4ff;">New Login Detected</h1>`,
-  `<h2 style="margin:0 0 12px;color:#e8f4ff;font-size:18px;font-weight:700;">Hey ${name || "there"} 👋</h2>
-   <p style="color:#8ab4d4;font-size:14px;line-height:1.7;margin-bottom:20px;">
-     A new login was detected on your PulseIQ account. Here are the details:
-   </p>
-   ${infoBox(`<table style="width:100%;border-collapse:collapse;">
-     ${row("Account", email)}
-     ${row("IP Address", ip || "Unknown")}
-     ${row("Device", device || "Unknown")}
-     ${row("Time", new Date().toLocaleString())}
-   </table>`, "#00e5ff40")}
-   <p style="text-align:center;font-size:13px;color:#8ab4d4;margin-top:8px;">If this was you — no action needed. ✅</p>
-   <p style="text-align:center;font-size:12px;color:#f43f8e;">⚠️ If this wasn't you, reset your password immediately.</p>`
-);
+export const getLoginAlertTemplate = ({
+  name,
+  email,
+  ip,
+  device,
+  location,
+  blockLink,
+}) =>
+  layout(
+    "linear-gradient(135deg,#0a1020 0%,#0d1830 100%)",
 
+    // 🔹 HEADER
+    `<p style="margin:0;font-size:12px;color:#00e5ff;text-transform:uppercase;letter-spacing:0.3em;">
+      Security Alert
+    </p>
+     <h1 style="margin:8px 0 0;font-size:26px;font-weight:900;color:#e8f4ff;">
+      New Login Detected 🔐
+    </h1>`,
+
+    // 🔹 BODY
+    `<h2 style="margin:0 0 12px;color:#e8f4ff;font-size:18px;font-weight:700;">
+      Hey ${name || "there"} 👋
+    </h2>
+
+    <p style="color:#8ab4d4;font-size:14px;line-height:1.7;margin-bottom:20px;">
+      We noticed a new login to your <b>PulseIQ</b> account.  
+      If this was you, you can safely ignore this message.
+    </p>
+
+    ${infoBox(
+      `<table style="width:100%;border-collapse:collapse;font-size:13px;">
+        ${row("👤 Account", email)}
+        ${row("🌐 IP Address", ip || "Unknown")}
+        ${row("💻 Device", device || "Unknown")}
+        ${location ? row("📍 Location", location) : ""}
+        ${row("⏰ Time", new Date().toLocaleString("en-IN", {
+          dateStyle: "medium",
+          timeStyle: "short",
+        }))}
+      </table>`,
+      "#00e5ff40"
+    )}
+
+    <!-- 🔥 BUTTONS -->
+    <div style="margin-top:20px;text-align:center;">
+      
+      
+
+      <a href="${blockLink}" 
+         style="display:inline-block;padding:12px 20px;margin:6px;border-radius:10px;
+                background:linear-gradient(135deg,#ef4444,#dc2626);
+                color:white;font-weight:700;text-decoration:none;font-size:13px;">
+        ❌ This wasn't me
+      </a>
+
+    </div>
+
+    <p style="text-align:center;font-size:13px;color:#8ab4d4;margin-top:12px;">
+      If you don't recognize this activity, please take action immediately.
+    </p>
+
+    <p style="text-align:center;font-size:11px;color:#3d6080;margin-top:12px;">
+      PulseIQ Security System • Keeping your account safe 🔐
+    </p>`
+  );
 
 // ══════════════════════════════════════════════════════
 // 4. WELCOME EMAIL

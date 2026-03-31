@@ -17,7 +17,20 @@ export const register = async (req, res, next) => {
 
 export const login = async (req, res, next) => {
   try {
-    const { user, at, rt } = await loginUser(req.body);
+    // 🔥 REAL IP
+    const ip =
+      req.headers["x-forwarded-for"]?.split(",")[0] ||
+      req.socket?.remoteAddress ||
+      req.ip;
+
+    // 🔥 DEVICE INFO
+    const userAgent = req.headers["user-agent"];
+
+    const { user, accessToken: at, refreshToken: rt } = await loginUser({
+      ...req.body,
+      ip,
+      userAgent,
+    });
 
     res
       .cookie("refreshToken", rt, cookieOpts())

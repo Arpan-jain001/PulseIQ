@@ -9,6 +9,7 @@ import {
   getWelcomeTemplate,
   getLoginAlertTemplate,
 } from "../utils/emailTemplate.js";
+import UAParser from "ua-parser-js";
 
 /* ═══════════════════════════════════════════
    TOKEN GENERATORS
@@ -61,7 +62,7 @@ export const registerUser = async ({ name, email, password, role, companyName })
    LOGIN
 ═══════════════════════════════════════════ */
 
-export const loginUser = async ({ email, password, role }) => {
+export const loginUser = async ({ email, password, role, ip, userAgent }) => {
   // ✅ FIX: .select("+refreshToken") — refreshToken has select:false in schema
   const user = await User.findOne({ email }).select("+refreshToken");
 
@@ -75,6 +76,13 @@ export const loginUser = async ({ email, password, role }) => {
   // Password check
   const isMatch = await user.matchPassword(password);
   if (!isMatch) throw { statusCode: 401, message: "Invalid credentials" };
+  const parser = new UAParser(userAgent);
+
+const deviceInfo = `${
+  parser.getBrowser().name || "Unknown"
+} on ${
+  parser.getOS().name || "Unknown"
+}`;
 
   // Email verify (SUPER_ADMIN skip karo)
   if (user.role !== "SUPER_ADMIN" && !user.emailVerified) {
@@ -95,30 +103,51 @@ export const loginUser = async ({ email, password, role }) => {
   }
 
   const accessToken = generateAccessToken(user._id);
-  const refreshToken = generateRefreshToken(user._id);
+const refreshToken = generateRefreshToken(user._id);
 
-  // ✅ Login alert email — non-blocking (don't crash login if email fails)
-  if (!user.lastLoginAt || Date.now() - user.lastLoginAt > 5 * 60 * 1000) {
-    try {
-      await sendEmail({
-        to: user.email,
-        subject: "New Login Detected 🔐 — PulseIQ",
-        html: getLoginAlertTemplate({
-          name: user.name,
-          email: user.email,
-          time: new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }),
-        }),
-      });
-    } catch (_) {
-      // Silently ignore — don't block login
-    }
+// ✅ Login alert email — non-blocking
+if (!user.lastLoginAt || Date.now() - user.lastLoginAt > 5 * 60 * 1000) {
+  try {
+    // 🔥 TOKEN GENERATE
+    const rawToken = crypto.randomBytes(32).toString("hex");
+
+    const hashedToken = crypto
+      .createHash("sha256")
+      .update(rawToken)
+      .digest("hex");
+
+    user.loginAlertToken = hashedToken;
+    user.loginAlertExpire = Date.now() + 10 * 60 * 1000;
+
+    await user.save();
+
+    // 🔥 LINKS
+    const allowLink = `${process.env.CLIENT_URL}/security/verify-login/${rawToken}?action=allow`;
+    const blockLink = `${process.env.CLIENT_URL}/security/verify-login/${rawToken}?action=block`;
+
+    await sendEmail({
+      to: user.email,
+      subject: "New Login Detected 🔐 — PulseIQ",
+      html: getLoginAlertTemplate({
+        name: user.name,
+        email: user.email,
+        ip,
+        device: deviceInfo,
+        allowLink,
+        blockLink,
+      }),
+    });
+  } catch (_) {
+    // ignore
   }
+}
 
-  user.refreshToken = refreshToken;
-  user.lastLoginAt = Date.now();
-  await user.save();
+// 🔁 tokens save
+user.refreshToken = refreshToken;
+user.lastLoginAt = Date.now();
+await user.save();
 
-  return { user, accessToken, refreshToken };
+return { user, accessToken, refreshToken };
 };
 
 /* ═══════════════════════════════════════════

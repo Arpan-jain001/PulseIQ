@@ -45,10 +45,14 @@ const userSchema = new mongoose.Schema(
     emailVerificationOTP: String,
     emailVerificationExpire: Date,
 
-    // Reset password
-    resetPasswordToken: String,
-    resetPasswordOTP: String,
-    resetPasswordExpire: Date,
+     // Reset password
+resetPasswordToken: String,
+resetPasswordOTP: String,
+resetPasswordExpire: Date,
+
+// 🔐 Login alert security
+loginAlertToken: String,
+loginAlertExpire: Date,
 
     // ✅ select: false — must use .select("+refreshToken") explicitly
     refreshToken: { type: String, default: "", select: false },
