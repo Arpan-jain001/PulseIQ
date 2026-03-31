@@ -1,3 +1,4 @@
+import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 import crypto from "crypto";
@@ -41,7 +42,7 @@ export const registerUser = async ({ name, email, password, role, companyName })
     role: role || "USER",
     companyName: companyName || null,           // ✅ companyName support added
     emailVerificationToken: token,
-    emailVerificationOTP: otp,
+    emailVerificationOTP: await bcrypt.hash(otp, 10),
     emailVerificationExpire: Date.now() + 10 * 60 * 1000, // 10 min
   });
 
@@ -199,13 +200,18 @@ export const verifyEmailByLink = async (token) => {
 ═══════════════════════════════════════════ */
 
 export const verifyEmailByOTP = async (email, otp) => {
-  const user = await User.findOne({
-    email,
-    emailVerificationOTP: otp,
-    emailVerificationExpire: { $gt: Date.now() },
-  });
+const user = await User.findOne({
+  email,
+  emailVerificationExpire: { $gt: Date.now() },
+});
 
-  if (!user) throw { statusCode: 400, message: "Invalid or expired OTP" };
+if (!user) throw { statusCode: 400, message: "Invalid or expired OTP" };
+
+const isMatch = await bcrypt.compare(otp, user.emailVerificationOTP);
+
+if (!isMatch) {
+  throw { statusCode: 400, message: "Invalid or expired OTP" };
+}
 
   user.emailVerified = true;
   user.emailVerificationToken = null;
@@ -227,7 +233,7 @@ export const resendVerification = async (email) => {
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
   user.emailVerificationToken = token;
-  user.emailVerificationOTP = otp;
+  user.emailVerificationOTP = await bcrypt.hash(otp, 10);
   user.emailVerificationExpire = Date.now() + 10 * 60 * 1000;
   await user.save();
 
@@ -251,9 +257,12 @@ export const forgotPassword = async (email) => {
   const token = crypto.randomBytes(32).toString("hex");
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-  user.resetPasswordToken = token;
-  user.resetPasswordOTP = otp;
-  user.resetPasswordExpire = Date.now() + 10 * 60 * 1000; // 10 min
+  const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+const hashedOTP = await bcrypt.hash(otp, 10);
+
+user.resetPasswordToken = hashedToken;
+user.resetPasswordOTP = hashedOTP;
+user.resetPasswordExpire = Date.now() + 10 * 60 * 1000;
   await user.save();
 
   const link = `${process.env.CLIENT_URL}/reset-password/${token}`;
@@ -270,10 +279,12 @@ export const forgotPassword = async (email) => {
 ═══════════════════════════════════════════ */
 
 export const resetPassword = async (token, password) => {
-  const user = await User.findOne({
-    resetPasswordToken: token,
-    resetPasswordExpire: { $gt: Date.now() },
-  });
+  const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+
+const user = await User.findOne({
+  resetPasswordToken: hashedToken,
+  resetPasswordExpire: { $gt: Date.now() },
+});
 
   if (!user) throw { statusCode: 400, message: "Invalid or expired reset link" };
 
@@ -290,10 +301,17 @@ export const resetPassword = async (token, password) => {
 
 export const resetPasswordByOTP = async (email, otp, password) => {
   const user = await User.findOne({
-    email,
-    resetPasswordOTP: otp,
-    resetPasswordExpire: { $gt: Date.now() },
-  });
+  email,
+  resetPasswordExpire: { $gt: Date.now() },
+});
+
+if (!user) throw { statusCode: 400, message: "Invalid or expired OTP" };
+
+const isMatch = await bcrypt.compare(otp, user.resetPasswordOTP);
+
+if (!isMatch) {
+  throw { statusCode: 400, message: "Invalid or expired OTP" };
+}
 
   if (!user) throw { statusCode: 400, message: "Invalid or expired OTP" };
 

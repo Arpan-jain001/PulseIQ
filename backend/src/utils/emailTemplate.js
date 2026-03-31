@@ -102,18 +102,32 @@ export const getVerificationTemplate = ({ name, email, otp, link }) => layout(
 // ══════════════════════════════════════════════════════
 // 2. FORGOT PASSWORD
 // ══════════════════════════════════════════════════════
-export const getForgotPasswordTemplate = ({ name, email, link }) => layout(
+export const getForgotPasswordTemplate = ({ name, email, link, otp }) => layout(
   "linear-gradient(135deg,#1a0a0a 0%,#2d0f0f 100%)",
   `<p style="margin:0;font-size:12px;color:#f43f8e;text-transform:uppercase;letter-spacing:0.3em;">Password Reset</p>
    <h1 style="margin:8px 0 0;font-size:24px;font-weight:900;color:#e8f4ff;">Reset Your Password</h1>`,
+
   `<h2 style="margin:0 0 12px;color:#e8f4ff;font-size:18px;font-weight:700;">Hey ${name || "there"} 👋</h2>
+
    <p style="color:#8ab4d4;font-size:14px;line-height:1.7;margin-bottom:20px;">
-     We received a password reset request for your PulseIQ account. Click the button below to set a new password.
+     You can reset your password using the button below OR by entering the OTP.
    </p>
-   ${infoBox(`<strong style="color:#3d6080;">Account:</strong> <span style="color:#e8f4ff;">${email}</span>`, "#f43f8e40")}
-   ${btn("Reset My Password", link, "#f43f8e")}
-   <p style="text-align:center;font-size:12px;color:#3d6080;">⏱ This link expires in <strong style="color:#f59e0b;">10 minutes</strong></p>
-   <p style="text-align:center;font-size:12px;color:#f43f8e;margin-top:8px;">⚠️ If you didn't request this, please ignore this email. Your password won't change.</p>`
+
+   ${btn("Reset via Link", link, "#f43f8e")}
+
+   <div style="text-align:center;margin:25px 0;">
+     <p style="font-size:12px;color:#3d6080;margin-bottom:10px;">OR use this OTP</p>
+
+     <div style="display:inline-block;padding:18px 32px;background:#04080f;border:2px dashed #f43f8e40;border-radius:16px;font-size:32px;font-weight:900;letter-spacing:12px;color:#f43f8e;">
+       ${otp}
+     </div>
+
+     <p style="font-size:11px;color:#3d6080;margin-top:10px;">⏱ Valid for 10 minutes</p>
+   </div>
+
+   <p style="text-align:center;font-size:12px;color:#f43f8e;">
+     ⚠️ Never share this code
+   </p>`
 );
 
 

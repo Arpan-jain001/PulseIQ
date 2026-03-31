@@ -4,6 +4,7 @@ import { Toaster } from "./components/ui/sonner";
 import { ToasterComponent } from "./components/ui/toaster";
 import { TooltipProvider } from "./components/ui/tooltip";
 import { useWarmup } from "./hooks/useWarmup.js";
+import ScrollManager from "./components/ScrollManager";
 
 // Pages
 import Index from "./pages/Index";
@@ -66,6 +67,7 @@ const App = () => (
       <BackendWarmup />
 
       <BrowserRouter>
+      <ScrollManager />
         <Routes>
           {/* Public */}
           <Route path="/" element={<Index />} />

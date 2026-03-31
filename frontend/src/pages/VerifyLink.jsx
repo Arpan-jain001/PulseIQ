@@ -54,46 +54,116 @@ const VerifyLink = () => {
 
         {/* ✅ SUCCESS */}
         {status === "success" && (
-          <motion.div
-            key="success"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0 }}
-            className="bg-white/70 backdrop-blur-xl border border-white rounded-3xl p-10 text-center shadow-xl"
-          >
-            <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto mb-4" />
-            <h2 className="text-xl font-bold text-slate-900">Email Verified 🎉</h2>
-            <p className="text-sm text-slate-400 mt-2">
-              Redirecting to login...
-            </p>
-          </motion.div>
-        )}
+  <motion.div
+    key="success"
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    exit={{ opacity: 0 }}
+    className="absolute inset-0 flex items-center justify-center bg-black/30 backdrop-blur-sm"
+  >
+    <motion.div
+      className="w-[90%] max-w-xs rounded-3xl bg-white shadow-2xl p-8 text-center"
+      initial={{ scale: 0.7, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ type: "spring", stiffness: 200 }}
+    >
+      {/* Animated Tick */}
+      <motion.div
+        className="w-20 h-20 rounded-2xl bg-emerald-50 border-2 border-emerald-200 flex items-center justify-center mx-auto mb-4"
+        initial={{ scale: 0.5 }}
+        animate={{ scale: [0.5, 1.2, 1] }}
+        transition={{ duration: 0.5 }}
+      >
+        <svg width="36" height="36" viewBox="0 0 24 24">
+          <motion.path
+            d="M20 6L9 17l-5-5"
+            stroke="#059669"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            initial={{ pathLength: 0 }}
+            animate={{ pathLength: 1 }}
+            transition={{ duration: 0.4 }}
+          />
+        </svg>
+      </motion.div>
+
+      <h3 className="text-xl font-black text-slate-900">
+        Email Verified 🎉
+      </h3>
+
+      <p className="text-sm text-slate-500 mt-1">
+        Redirecting to login...
+      </p>
+
+      {/* Progress Bar */}
+      <div className="mt-4 h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+        <motion.div
+          className="h-full bg-emerald-500"
+          initial={{ width: "0%" }}
+          animate={{ width: "100%" }}
+          transition={{ duration: 2 }}
+        />
+      </div>
+    </motion.div>
+  </motion.div>
+)}
 
         {/* ❌ ERROR */}
         {status === "error" && (
-          <motion.div
-            key="error"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0 }}
-            className="bg-white/70 backdrop-blur-xl border border-white rounded-3xl p-10 text-center shadow-xl"
-          >
-            <XCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-            <h2 className="text-xl font-bold text-slate-900">
-              Invalid or Expired Link
-            </h2>
-            <p className="text-sm text-slate-400 mt-2 mb-4">
-              Please request a new verification email
-            </p>
+  <motion.div
+    key="error"
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    exit={{ opacity: 0 }}
+    className="absolute inset-0 flex items-center justify-center bg-black/30 backdrop-blur-sm"
+  >
+    <motion.div
+      className="w-[90%] max-w-xs rounded-3xl bg-white shadow-2xl p-8 text-center"
+      initial={{ scale: 0.7, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ type: "spring", stiffness: 200 }}
+    >
+      {/* ❌ Animated Cross */}
+      <motion.div
+        className="w-20 h-20 rounded-2xl bg-red-50 border-2 border-red-200 flex items-center justify-center mx-auto mb-4"
+        initial={{ scale: 0.5 }}
+        animate={{ scale: [0.5, 1.2, 1] }}
+        transition={{ duration: 0.5 }}
+      >
+        <svg width="36" height="36" viewBox="0 0 24 24">
+          <motion.path
+            d="M6 6L18 18M6 18L18 6"
+            stroke="#dc2626"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            initial={{ pathLength: 0 }}
+            animate={{ pathLength: 1 }}
+            transition={{ duration: 0.4 }}
+          />
+        </svg>
+      </motion.div>
 
-            <button
-              onClick={() => navigate("/login")}
-              className="px-5 py-2.5 bg-violet-600 text-white rounded-xl font-semibold hover:bg-violet-700 transition"
-            >
-              Go to Login
-            </button>
-          </motion.div>
-        )}
+      <h3 className="text-xl font-black text-slate-900">
+        Link Expired ❌
+      </h3>
+
+      <p className="text-sm text-slate-500 mt-1">
+        Please request a new verification email
+      </p>
+
+      {/* Button */}
+      <motion.button
+        whileTap={{ scale: 0.96 }}
+        whileHover={{ scale: 1.02 }}
+        onClick={() => navigate("/login")}
+        className="mt-5 w-full py-2.5 bg-gradient-to-r from-red-500 to-rose-600 text-white rounded-xl font-bold shadow-lg"
+      >
+        Go to Login
+      </motion.button>
+    </motion.div>
+  </motion.div>
+)}
 
       </AnimatePresence>
     </div>

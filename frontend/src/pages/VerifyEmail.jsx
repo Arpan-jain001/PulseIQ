@@ -221,11 +221,10 @@ const VerifyEmail = () => {
                   maxLength={1}
                   inputMode="numeric"
                   whileFocus={{ scale: 1.08, borderColor: "#6366f1" }}
-                  className={`w-12 h-14 text-center text-xl font-black rounded-xl border-2 transition-all focus:outline-none bg-white/90 text-slate-900 ${
-                    digit
+                  className={`w-12 h-14 text-center text-xl font-black rounded-xl border-2 transition-all focus:outline-none bg-white/90 text-slate-900 ${digit
                       ? "border-indigo-400 bg-indigo-50/50 shadow-sm shadow-indigo-100"
                       : "border-slate-200 hover:border-slate-300"
-                  } ${error ? "border-red-300 bg-red-50/30" : ""}`}
+                    } ${error ? "border-red-300 bg-red-50/30" : ""}`}
                   disabled={isLoading || success}
                   autoFocus={i === 0}
                 />
@@ -314,16 +313,21 @@ const VerifyEmail = () => {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="absolute inset-0 flex items-center justify-center bg-white/90 backdrop-blur-xl rounded-3xl"
+                  className="absolute inset-0 flex items-center justify-center bg-black/30 backdrop-blur-sm rounded-3xl"
                 >
-                  <div className="text-center">
+                  <motion.div
+                    className="w-[90%] max-w-xs rounded-3xl bg-white shadow-2xl p-8 text-center"
+                    initial={{ scale: 0.7, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ type: "spring", stiffness: 200 }}
+                  >
                     <motion.div
+                      className="w-20 h-20 rounded-2xl bg-emerald-50 border-2 border-emerald-200 flex items-center justify-center mx-auto mb-4"
                       initial={{ scale: 0.5 }}
                       animate={{ scale: [0.5, 1.2, 1] }}
                       transition={{ duration: 0.5 }}
-                      className="w-20 h-20 rounded-2xl bg-emerald-50 border-2 border-emerald-200 flex items-center justify-center mx-auto mb-4"
                     >
-                      <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
+                      <svg width="36" height="36" viewBox="0 0 24 24">
                         <motion.path
                           d="M20 6L9 17l-5-5"
                           stroke="#059669"
@@ -336,10 +340,26 @@ const VerifyEmail = () => {
                         />
                       </svg>
                     </motion.div>
-                    <h3 className="text-xl font-black text-slate-900 mb-1">Email Verified! 🎉</h3>
-                    <p className="text-sm text-slate-500">Redirecting to login…</p>
-                  </div>
+
+                    <h3 className="text-xl font-black text-slate-900 mb-1">
+                      Password Reset! 🎉
+                    </h3>
+
+                    <p className="text-sm text-slate-500">
+                      Redirecting to login...
+                    </p>
+
+                    <div className="mt-4 h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                      <motion.div
+                        className="h-full bg-emerald-500"
+                        initial={{ width: "0%" }}
+                        animate={{ width: "100%" }}
+                        transition={{ duration: 2 }}
+                      />
+                    </div>
+                  </motion.div>
                 </motion.div>
+
               )}
             </AnimatePresence>
 
