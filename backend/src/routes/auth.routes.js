@@ -128,7 +128,7 @@ router.get("/verify-login/:token", async (req, res) => {
       await user.save();
 
       // 🔥 redirect to reset password page
-      return res.redirect(`${process.env.CLIENT_URL}/reset-password`);
+      return res.redirect(`${process.env.CLIENT_URL}/reset-password/${token}`);
     }
 
     // ✅ SAFE
