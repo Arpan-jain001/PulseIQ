@@ -9,7 +9,7 @@ import {
   getWelcomeTemplate,
   getLoginAlertTemplate,
 } from "../utils/emailTemplate.js";
-import UAParser from "ua-parser-js";
+import { UAParser } from "ua-parser-js";
 
 /* ═══════════════════════════════════════════
    TOKEN GENERATORS
