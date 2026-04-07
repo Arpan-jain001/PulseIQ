@@ -46,6 +46,17 @@ export const useOrgApi = () => {
   const verifySdk          = (id) => req("GET",  `/api/projects/${id}/verify-sdk`);
   const skipVerification   = (id) => req("POST", `/api/projects/${id}/skip-verification`);
 
+  // Analytics — extended
+  const getMau             = (projId)                   => req("GET", `/api/analytics/mau?projectId=${projId}`);
+  const getPageAnalytics   = (projId, from, to)         => req("GET", `/api/analytics/page-analytics?projectId=${projId}&from=${from}&to=${to}`);
+  const getRetention       = (projId, from, to)         => req("GET", `/api/analytics/retention?projectId=${projId}&from=${from}&to=${to}`);
+  const getEventTrend      = (projId, from, to)         => req("GET", `/api/analytics/event-trend?projectId=${projId}&from=${from}&to=${to}`);
+
+  // AI
+  const getAiInsights      = (body)                     => req("POST", "/api/ai/insights",      body);
+  const askAiChat          = (body)                     => req("POST", "/api/ai/chat",           body);
+  const getPageAiInsights  = (body)                     => req("POST", "/api/ai/page-insights",  body);
+
   // Analytics
   const getAnalyticsOverview = (projectId, from, to) => {
     const p = new URLSearchParams({ projectId, ...(from && { from }), ...(to && { to }) });
@@ -73,6 +84,8 @@ export const useOrgApi = () => {
     getMyWorkspaces, createWorkspace, deleteWorkspace,
     getMembers, addMember, removeMember,
     createProject, getProjects, deleteProject, updateProject, verifySdk, skipVerification,
+    getMau, getPageAnalytics, getRetention, getEventTrend,
+    getAiInsights, askAiChat, getPageAiInsights,
     getAnalyticsOverview, getDau, getFunnel,
     getNotifications, markRead,
   };
