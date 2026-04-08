@@ -1,5 +1,5 @@
 const YEAR = new Date().getFullYear();
-const SUPPORT_EMAIL = process.env.SUPPORT_EMAIL || "support@pulseiq.ai";
+const SUPPORT_EMAIL = process.env.SUPPORT_EMAIL || "arpanjain00123@gmail.com";
 
 const escapeHtml = (value = "") =>
   String(value)

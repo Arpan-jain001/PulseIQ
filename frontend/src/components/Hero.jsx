@@ -288,7 +288,7 @@ const Hero = () => {
 
             <motion.h1
               variants={item}
-              className="text-[2rem] sm:text-5xl md:text-6xl lg:text-[5.35rem] xl:text-[6rem] font-black leading-[1.02] mb-5 sm:mb-6 tracking-[0.015em] sm:tracking-[0.03em] animate-glitch"
+              className="text-[1.85rem] sm:text-[3.2rem] md:text-[4rem] lg:text-[4.55rem] xl:text-[5.1rem] font-black leading-[1.02] mb-5 sm:mb-6 tracking-[0.015em] sm:tracking-[0.03em] animate-glitch"
               style={{ fontFamily: "var(--font-display)" }}
             >
               <span className="block text-[#e8f4ff]">TRACK</span>

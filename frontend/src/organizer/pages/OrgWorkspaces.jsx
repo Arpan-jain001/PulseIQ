@@ -18,30 +18,6 @@ const Toast = ({ toast }) => {
   );
 };
 
-const ConfirmModal = ({ title, message, onConfirm, onCancel, confirmLabel = "Delete" }) => (
-  <motion.div className="fixed inset-0 z-[9999] flex items-center justify-center px-4"
-    initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-    <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={onCancel} />
-    <motion.div className="relative w-full max-w-sm rounded-2xl overflow-hidden"
-      initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }}
-      style={{ background: "linear-gradient(135deg,#0d1117,#161b22)", border: "1px solid #f43f8e22", boxShadow: "0 0 60px #00000099" }}>
-      <div className="h-[2px] bg-gradient-to-r from-[#f43f8e] to-transparent" />
-      <div className="p-6 text-center">
-        <div className="w-12 h-12 rounded-2xl bg-[#f43f8e0a] border border-[#f43f8e30] flex items-center justify-center mx-auto mb-4">
-          <Trash2 className="w-5 h-5 text-[#f43f8e]" />
-        </div>
-        <h3 className="text-sm font-black text-[#e8f4ff] mb-2 uppercase" style={{ fontFamily: "var(--font-display)" }}>{title}</h3>
-        <p className="text-xs text-[#3d6080] mb-6" style={{ fontFamily: "var(--font-mono)" }}>{message}</p>
-        <div className="flex gap-3">
-          <button onClick={onCancel} className="flex-1 py-2.5 rounded-xl border border-[#1a2a4a] text-[#8ab4d4] text-xs uppercase tracking-widest" style={{ fontFamily: "var(--font-mono)" }}>Cancel</button>
-          <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={onConfirm}
-            className="flex-1 py-2.5 rounded-xl bg-[#f43f8e] text-white font-bold text-xs uppercase tracking-widest" style={{ fontFamily: "var(--font-mono)" }}>{confirmLabel}</motion.button>
-        </div>
-      </div>
-    </motion.div>
-  </motion.div>
-);
-
 const AddMemberModal = ({ wsName, wsId, onClose, onAdd }) => {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("MEMBER");
@@ -197,6 +173,7 @@ const OrgWorkspaces = () => {
   const [addMemberModal, setAddMemberModal] = useState(null);
   const [removeMemberModal, setRemoveMemberModal] = useState(null);
   const [toast, setToast] = useState(null);
+  const [removingMember, setRemovingMember] = useState(false);
   const isVerified = user?.verificationStatus === "VERIFIED";
 
   const showToast = (type, msg) => { setToast({ type, msg }); setTimeout(() => setToast(null), 3000); };
@@ -240,15 +217,17 @@ const OrgWorkspaces = () => {
     setMembersMap(m => ({ ...m, [wsId]: res?.data || [] }));
   };
 
-  const handleRemoveMember = async () => {
+  const handleRemoveMember = async (confirmation) => {
     if (!removeMemberModal) return;
+    setRemovingMember(true);
     try {
-      await removeMember(removeMemberModal.wsId, removeMemberModal.userId);
+      await removeMember(removeMemberModal.wsId, removeMemberModal.userId, confirmation);
       showToast("success", "Member removed.");
       const res = await getMembers(removeMemberModal.wsId);
       setMembersMap(m => ({ ...m, [removeMemberModal.wsId]: res?.data || [] }));
       setRemoveMemberModal(null);
     } catch (e) { showToast("error", e.message || "Remove failed."); }
+    finally { setRemovingMember(false); }
   };
 
   return (
@@ -414,11 +393,15 @@ const OrgWorkspaces = () => {
             onClose={() => setAddMemberModal(null)} onAdd={handleAddMember} />
         )}
         {removeMemberModal && (
-          <ConfirmModal title="Remove Member"
-            message={`Remove "${removeMemberModal.name}" from workspace?`}
+          <TypedDeleteModal
+            title="Remove Member"
+            itemName={removeMemberModal.name}
+            description={`Permanently remove "${removeMemberModal.name}" from this workspace? They will lose access immediately.`}
+            confirmLabel="Remove Member"
+            deleting={removingMember}
+            onCancel={() => !removingMember && setRemoveMemberModal(null)}
             onConfirm={handleRemoveMember}
-            confirmLabel="Remove"
-            onCancel={() => setRemoveMemberModal(null)} />
+          />
         )}
       </AnimatePresence>
     </OrgLayout>
