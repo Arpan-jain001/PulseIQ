@@ -2,12 +2,14 @@
 import { askAI }          from "../services/ai.service.js";
 import { buildAiContext } from "../services/analytics.service.js";
 import Project            from "../models/Project.js";
+import { getAccessibleProject } from "../services/projectAccess.service.js";
 
 /* ── POST /api/ai/insights ── */
 export const insights = async (req, res, next) => {
   try {
     const { projectId, from, to, projectName, page } = req.body;
     if (!projectId) return res.status(400).json({ success:false, message:"projectId required" });
+    await getAccessibleProject({ projectId, user: req.user });
 
     const toDate   = to   ? new Date(to)   : new Date();
     const fromDate = from ? new Date(from) : new Date(Date.now() - 30 * 86400000);
@@ -104,6 +106,7 @@ export const chat = async (req, res, next) => {
     if (!projectId || !question) {
       return res.status(400).json({ success:false, message:"projectId and question required" });
     }
+    await getAccessibleProject({ projectId, user: req.user });
 
     const toDate   = to   ? new Date(to)   : new Date();
     const fromDate = from ? new Date(from) : new Date(Date.now() - 30 * 86400000);
@@ -137,6 +140,7 @@ export const pageInsights = async (req, res, next) => {
     if (!projectId || !page) {
       return res.status(400).json({ success:false, message:"projectId and page required" });
     }
+    await getAccessibleProject({ projectId, user: req.user });
 
     const toDate   = to   ? new Date(to)   : new Date();
     const fromDate = from ? new Date(from) : new Date(Date.now() - 30 * 86400000);

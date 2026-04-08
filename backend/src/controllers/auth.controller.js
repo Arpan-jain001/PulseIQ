@@ -2,8 +2,15 @@ import { registerUser, loginUser, refreshAccessToken, logoutUser } from "../serv
 
 const cookieOpts = () => ({
   httpOnly: true,
-  secure: String(process.env.COOKIE_SECURE) === "true",
-  sameSite: process.env.COOKIE_SAMESITE || "lax",
+  secure:
+    String(process.env.COOKIE_SECURE) === "true" ||
+    process.env.NODE_ENV === "production",
+  sameSite:
+    process.env.COOKIE_SAMESITE ||
+    ((String(process.env.COOKIE_SECURE) === "true" || process.env.NODE_ENV === "production")
+      ? "none"
+      : "lax"),
+  path: "/",
 });
 
 export const register = async (req, res, next) => {

@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Building2, Trash2, RefreshCw, Search, ChevronLeft, ChevronRight, UserCog, X, CheckCircle2, Clock, XCircle } from "lucide-react";
 import AdminLayout from "../components/AdminLayout";
 import { useAdminApi } from "../hooks/useAdminApi";
+import TypedDeleteModal from "../../components/TypedDeleteModal";
 
 const VER_CFG = {
   VERIFIED: { color: "#10d990", label: "Verified" },
@@ -157,9 +158,9 @@ const AdminOrganizations = () => {
     } catch { showToast("error", "Update failed."); }
   };
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (id, confirmation) => {
     try {
-      await deleteUser(id);
+      await deleteUser(id, confirmation);
       showToast("success", "Organization deleted.");
       setDeleteModal(null);
       load();
@@ -344,25 +345,14 @@ const AdminOrganizations = () => {
       <AnimatePresence>
         {editOrg && <EditOrgModal org={editOrg} onClose={() => setEditOrg(null)} onSave={handleSave} />}
         {deleteModal && (
-          <motion.div className="fixed inset-0 z-[9999] flex items-center justify-center px-4"
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={() => setDeleteModal(null)} />
-            <motion.div className="relative w-full max-w-sm rounded-2xl border border-[#1a2a4a] bg-[#0a0f1a] p-6 text-center"
-              initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }}>
-              <h3 className="text-sm font-black text-[#e8f4ff] mb-2 uppercase" style={{ fontFamily: "var(--font-display)" }}>Delete Organization</h3>
-              <p className="text-xs text-[#3d6080] mb-5" style={{ fontFamily: "var(--font-mono)" }}>
-                Delete organizer "{deleteModal.name}"? This cannot be undone.
-              </p>
-              <div className="flex gap-3">
-                <button onClick={() => setDeleteModal(null)}
-                  className="flex-1 py-2.5 rounded-xl border border-[#1a2a4a] text-[#8ab4d4] text-xs uppercase tracking-widest"
-                  style={{ fontFamily: "var(--font-mono)" }}>Cancel</button>
-                <motion.button whileTap={{ scale: 0.98 }} onClick={() => handleDelete(deleteModal._id)}
-                  className="flex-1 py-2.5 rounded-xl bg-[#f43f8e] text-white font-bold text-xs uppercase tracking-widest"
-                  style={{ fontFamily: "var(--font-mono)" }}>Delete</motion.button>
-              </div>
-            </motion.div>
-          </motion.div>
+          <TypedDeleteModal
+            title="Delete Organization"
+            itemName={deleteModal.name}
+            description={`Permanently delete organizer "${deleteModal.name}" and the data they own? This action cannot be undone.`}
+            deleting={loading}
+            onCancel={() => setDeleteModal(null)}
+            onConfirm={(confirmation) => handleDelete(deleteModal._id, confirmation)}
+          />
         )}
       </AnimatePresence>
     </AdminLayout>

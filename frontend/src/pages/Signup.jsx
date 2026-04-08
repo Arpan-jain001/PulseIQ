@@ -179,6 +179,7 @@ const Signup = () => {
   const [showSuccess, setShowSuccess] = useState(false);
   const [loadingText, setLoadingText] = useState("Creating your account...");
   const [focusedField, setFocusedField] = useState(null);
+  const [inviteToken] = useState(() => new URLSearchParams(window.location.search).get("invite") || localStorage.getItem("pulseiq_pending_invite") || "");
 
   const navigate = useNavigate();
   const abortControllerRef = useRef(null);
@@ -192,6 +193,13 @@ const Signup = () => {
       abortControllerRef.current?.abort();
       clearTimeout(toastTimerRef.current);
     };
+  }, []);
+
+  useEffect(() => {
+    const tokenFromQuery = new URLSearchParams(window.location.search).get("invite");
+    if (tokenFromQuery) {
+      localStorage.setItem("pulseiq_pending_invite", tokenFromQuery);
+    }
   }, []);
 
   useEffect(() => {
@@ -560,7 +568,7 @@ const Signup = () => {
               <motion.p className="text-sm text-slate-500 text-center mt-6"
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}>
                 Already have an account?{" "}
-                <Link to="/login" className="text-violet-600 hover:text-violet-800 font-bold transition-colors hover:underline">
+                <Link to={inviteToken ? `/login?invite=${inviteToken}` : "/login"} className="text-violet-600 hover:text-violet-800 font-bold transition-colors hover:underline">
                   Sign in →
                 </Link>
               </motion.p>

@@ -137,9 +137,13 @@ const Login = () => {
   const [rememberMe, setRememberMe] = useState(true);
   const [showSuccess, setShowSuccess] = useState(false);
   const [focusedField, setFocusedField] = useState(null);
+  const [inviteToken] = useState(() => {
+    const tokenFromQuery = new URLSearchParams(window.location.search).get("invite");
+    return tokenFromQuery || localStorage.getItem("pulseiq_pending_invite") || "";
+  });
 
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, authenticate } = useAuth();
   const abortControllerRef = useRef(null);
   const toastTimerRef = useRef(null);
   const isMountedRef = useRef(true);
@@ -151,6 +155,13 @@ const Login = () => {
       abortControllerRef.current?.abort();
       clearTimeout(toastTimerRef.current);
     };
+  }, []);
+
+  useEffect(() => {
+    const tokenFromQuery = new URLSearchParams(window.location.search).get("invite");
+    if (tokenFromQuery) {
+      localStorage.setItem("pulseiq_pending_invite", tokenFromQuery);
+    }
   }, []);
 
   useEffect(() => {
@@ -200,16 +211,22 @@ const Login = () => {
     fireToast("error", "⏱ Request timed out. Check your connection.");
   }, [resetLoading, fireToast]);
 
-  const saveAuth = useCallback((token, refreshToken) => {
-    // ✅ Sirf tokens save karo — user data hamesha DB se aayega (useAuth)
-    localStorage.setItem("accessToken", token);
-    localStorage.setItem("refreshToken", refreshToken);
-    localStorage.setItem("isLoggedIn", "true");
-    axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-  }, []);
-
   const successFlow = useCallback(async (userData) => {
     if (!isMountedRef.current) return;
+    if (inviteToken) {
+      try {
+        await axios.post(
+          `${BASE_API_URL}/api/workspaces/invitations/accept`,
+          { token: inviteToken },
+          { headers: { Authorization: `Bearer ${localStorage.getItem("accessToken")}` } }
+        );
+        localStorage.removeItem("pulseiq_pending_invite");
+        fireToast("success", "Invitation accepted successfully.");
+      } catch (err) {
+        const msg = err.response?.data?.message || "Invitation could not be accepted automatically.";
+        fireToast("info", msg);
+      }
+    }
     setIsLoading(false);
     setShowSuccess(true);
     fireToast("success", "Welcome back! Login successful.");
@@ -219,7 +236,7 @@ const Login = () => {
     if (userData.role === "SUPER_ADMIN") navigate("/admin-dashboard");
     else if (userData.role === "ORGANIZER") navigate("/organizer-dashboard");
     else navigate("/dashboard");
-  }, [navigate, fireToast]);
+  }, [inviteToken, navigate, fireToast]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -233,7 +250,14 @@ const Login = () => {
         { email, password, role },
         { headers: { "Content-Type": "application/json" }, signal: abortControllerRef.current.signal, timeout: LOGIN_TIMEOUT_MS }
       );
-      if (data.success) { saveAuth(data.accessToken, data.refreshToken); await successFlow(data.user); }
+      if (data.success) {
+        authenticate({
+          user: data.user,
+          accessToken: data.accessToken,
+          refreshToken: data.refreshToken,
+        });
+        await successFlow(data.user);
+      }
     } catch (err) {
       if (!isMountedRef.current) return;
       if (axios.isCancel(err) || err.name === "AbortError" || err.name === "CanceledError") { resetLoading(); return; }
@@ -267,14 +291,21 @@ const Login = () => {
           timeout: LOGIN_TIMEOUT_MS 
         }
       );
-      if (data.success) { saveAuth(data.accessToken, data.refreshToken); await successFlow(data.user); }
+      if (data.success) {
+        authenticate({
+          user: data.user,
+          accessToken: data.accessToken,
+          refreshToken: data.refreshToken,
+        });
+        await successFlow(data.user);
+      }
     } catch (err) {
       if (!isMountedRef.current) return;
       if (axios.isCancel(err) || err.name === "AbortError" || err.name === "CanceledError") { resetLoading(); return; }
       const msg = err.response?.data?.message || "Google login failed.";
       setError(msg); fireToast("error", msg); resetLoading();
     }
-  }, [showSuccess, saveAuth, successFlow, resetLoading, fireToast]);
+  }, [showSuccess, authenticate, successFlow, resetLoading, fireToast]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -584,7 +615,7 @@ const Login = () => {
               <motion.p className="text-sm text-slate-500 text-center mt-6"
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}>
                 Don't have an account?{" "}
-                <Link to="/signup" className="text-violet-600 hover:text-violet-800 font-bold transition-colors hover:underline">
+                <Link to={inviteToken ? `/signup?invite=${inviteToken}` : "/signup"} className="text-violet-600 hover:text-violet-800 font-bold transition-colors hover:underline">
                   Sign up free →
                 </Link>
               </motion.p>

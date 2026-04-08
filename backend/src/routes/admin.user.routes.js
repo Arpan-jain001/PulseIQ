@@ -3,6 +3,10 @@ import express from "express";
 import { protect } from "../middleware/auth.middleware.js";
 import { superAdminOnly } from "../middleware/superAdmin.middleware.js";
 import User from "../models/User.js";
+import {
+  deleteUserCascade,
+  isDeleteConfirmationValid,
+} from "../services/deletion.service.js";
 import { sendEmail } from "../utils/sendEmail.js";
 import {
   getNewAdminTemplate,
@@ -114,12 +118,19 @@ router.patch("/:id/remove-admin", protect, superAdminOnly, async (req, res) => {
 // ── Hard delete user ──────────────────────────────────
 router.delete("/:id", protect, superAdminOnly, async (req, res) => {
   try {
+    if (!isDeleteConfirmationValid(req.body?.confirmation)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Type "delete" to permanently delete this item.',
+      });
+    }
+
     const target = await User.findById(req.params.id);
     if (!target) return res.status(404).json({ success: false, message: "User not found." });
     if (target._id.toString() === req.user._id.toString()) {
       return res.status(400).json({ success: false, message: "Cannot delete your own account." });
     }
-    await User.findByIdAndDelete(req.params.id);
+    await deleteUserCascade(req.params.id);
     res.json({ success: true, message: "User deleted." });
   } catch (e) {
     res.status(500).json({ success: false, message: e.message });

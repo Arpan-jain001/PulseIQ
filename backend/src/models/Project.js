@@ -10,6 +10,9 @@ const projectSchema = new mongoose.Schema(
     apiKeyHash:     { type: String, required: true },
     allowedDomains: [{ type: String, trim: true }],
     status:         { type: String, enum: ["ACTIVE", "DISABLED"], default: "ACTIVE" },
+    categoryKey:    { type: String, default: "general" },
+    categoryLabel:  { type: String, default: "General Web App" },
+    categoryConfidence: { type: Number, default: 0 },
 
     // ── SDK Verification ──────────────────────────────────
     // false = not verified yet
@@ -23,6 +26,15 @@ const projectSchema = new mongoose.Schema(
     // After grace: analytics still accessible but warning shown
     skippedVerification: { type: Boolean, default: false },
     skippedAt:           { type: Date, default: null },
+
+    // Project pulse signals for automated reports / alerts
+    recentHealthScore:      { type: Number, default: null },
+    recentHealthLabel:      { type: String, default: null },
+    recentHealthSummary:    { type: String, default: null },
+    lastHealthEvaluatedAt:  { type: Date, default: null },
+    lastWeeklyReportAt:     { type: Date, default: null },
+    lastHealthAlertAt:      { type: Date, default: null },
+    lastGraceReminderAt:    { type: Date, default: null },
   },
   { timestamps: true }
 );

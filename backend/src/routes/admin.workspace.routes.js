@@ -5,6 +5,10 @@ import { superAdminOnly } from "../middleware/superAdmin.middleware.js";
 import Workspace from "../models/Workspace.js";
 import Membership from "../models/Membership.js";
 import Project from "../models/Project.js";
+import {
+  deleteWorkspaceCascade,
+  isDeleteConfirmationValid,
+} from "../services/deletion.service.js";
 
 const router = express.Router();
 
@@ -62,9 +66,19 @@ router.get("/:id", protect, superAdminOnly, async (req, res) => {
 // ── DELETE workspace + all its data ──────────────────
 router.delete("/:id", protect, superAdminOnly, async (req, res) => {
   try {
-    await Workspace.findByIdAndDelete(req.params.id);
-    await Membership.deleteMany({ workspaceId: req.params.id });
-    await Project.deleteMany({ workspaceId: req.params.id });
+    if (!isDeleteConfirmationValid(req.body?.confirmation)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Type "delete" to permanently delete this item.',
+      });
+    }
+
+    const workspace = await Workspace.findById(req.params.id);
+    if (!workspace) {
+      return res.status(404).json({ success: false, message: "Workspace not found." });
+    }
+
+    await deleteWorkspaceCascade(req.params.id);
     res.json({ success: true, message: "Workspace and all related data deleted." });
   } catch (e) {
     res.status(500).json({ success: false, message: e.message });

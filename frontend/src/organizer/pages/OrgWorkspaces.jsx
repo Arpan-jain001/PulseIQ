@@ -5,6 +5,7 @@ import { Building2, Plus, X, Users, RefreshCw, Copy, Check, Trash2, UserPlus, Ch
 import OrgLayout from "../components/OrgLayout";
 import { useOrgApi } from "../hooks/useOrgApi";
 import { useAuth } from "../../hooks/useAuth";
+import TypedDeleteModal from "../../components/TypedDeleteModal";
 
 const Toast = ({ toast }) => {
   if (!toast) return null;
@@ -17,7 +18,7 @@ const Toast = ({ toast }) => {
   );
 };
 
-const ConfirmModal = ({ title, message, onConfirm, onCancel }) => (
+const ConfirmModal = ({ title, message, onConfirm, onCancel, confirmLabel = "Delete" }) => (
   <motion.div className="fixed inset-0 z-[9999] flex items-center justify-center px-4"
     initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
     <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={onCancel} />
@@ -34,7 +35,7 @@ const ConfirmModal = ({ title, message, onConfirm, onCancel }) => (
         <div className="flex gap-3">
           <button onClick={onCancel} className="flex-1 py-2.5 rounded-xl border border-[#1a2a4a] text-[#8ab4d4] text-xs uppercase tracking-widest" style={{ fontFamily: "var(--font-mono)" }}>Cancel</button>
           <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={onConfirm}
-            className="flex-1 py-2.5 rounded-xl bg-[#f43f8e] text-white font-bold text-xs uppercase tracking-widest" style={{ fontFamily: "var(--font-mono)" }}>Delete</motion.button>
+            className="flex-1 py-2.5 rounded-xl bg-[#f43f8e] text-white font-bold text-xs uppercase tracking-widest" style={{ fontFamily: "var(--font-mono)" }}>{confirmLabel}</motion.button>
         </div>
       </div>
     </motion.div>
@@ -212,9 +213,9 @@ const OrgWorkspaces = () => {
     load();
   };
 
-  const handleDeleteWs = async (wsId) => {
+  const handleDeleteWs = async (wsId, confirmation) => {
     try {
-      await deleteWorkspace(wsId);
+      await deleteWorkspace(wsId, confirmation);
       showToast("success", "Workspace deleted.");
       setDeleteWsModal(null);
       if (expandedWs === wsId) setExpandedWs(null);
@@ -399,10 +400,14 @@ const OrgWorkspaces = () => {
       <AnimatePresence>
         {showCreate && <CreateModal onClose={() => setShowCreate(false)} onCreate={handleCreate} />}
         {deleteWsModal && (
-          <ConfirmModal title="Delete Workspace"
-            message={`Delete "${deleteWsModal.name}"? All members will be removed. Cannot be undone.`}
-            onConfirm={() => handleDeleteWs(deleteWsModal._id)}
-            onCancel={() => setDeleteWsModal(null)} />
+          <TypedDeleteModal
+            title="Delete Workspace"
+            itemName={deleteWsModal.name}
+            description={`Permanently delete "${deleteWsModal.name}"? All members, projects, analytics data, and workspace notifications will be removed.`}
+            deleting={loading}
+            onCancel={() => setDeleteWsModal(null)}
+            onConfirm={(confirmation) => handleDeleteWs(deleteWsModal._id, confirmation)}
+          />
         )}
         {addMemberModal && (
           <AddMemberModal wsName={addMemberModal.wsName} wsId={addMemberModal.wsId}
@@ -412,6 +417,7 @@ const OrgWorkspaces = () => {
           <ConfirmModal title="Remove Member"
             message={`Remove "${removeMemberModal.name}" from workspace?`}
             onConfirm={handleRemoveMember}
+            confirmLabel="Remove"
             onCancel={() => setRemoveMemberModal(null)} />
         )}
       </AnimatePresence>

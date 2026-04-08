@@ -29,7 +29,8 @@ export const inviteMember = async ({ workspaceId, userId, role }) => {
 };
 
 export const listMembers = async ({ workspaceId }) => {
-  const members = await Membership.find({ workspaceId, status: "ACTIVE" })
-    .populate("userId", "name email role status verificationStatus");
+  const members = await Membership.find({ workspaceId, status: { $in: ["PENDING", "ACTIVE"] } })
+    .populate("userId", "name email role status verificationStatus")
+    .populate("invitedBy", "name email");
   return members;
 };

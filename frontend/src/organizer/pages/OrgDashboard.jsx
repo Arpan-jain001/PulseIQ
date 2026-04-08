@@ -207,6 +207,7 @@ const OrgDashboard = () => {
   const [notifs, setNotifs]         = useState([]);
   const [analyticsPreview, setAnalyticsPreview] = useState(null);
   const [dauPreview, setDauPreview] = useState([]);
+  const [lastUpdated, setLastUpdated] = useState(null);
 
   const load = useCallback(async () => {
     try {
@@ -218,6 +219,7 @@ const OrgDashboard = () => {
       setWorkspaces(wsList);
       setProjects(pList);
       setNotifs(n?.data || []);
+      setLastUpdated(new Date());
 
       // Load analytics preview for first project
       if (pList.length > 0 && pList[0].sdkVerified) {
@@ -238,9 +240,20 @@ const OrgDashboard = () => {
 
   useEffect(() => { load(); }, [load]);
 
+  useEffect(() => {
+    const timer = setInterval(() => {
+      load();
+    }, 60000);
+
+    return () => clearInterval(timer);
+  }, [load]);
+
   const isVerified = user?.verificationStatus === "VERIFIED";
   const unread     = notifs.filter(n => !n.readBy?.includes(user?._id));
   const firstVerifiedProj = projects.find(p => p.sdkVerified);
+  const weakestProject = [...projects]
+    .filter((p) => typeof p.recentHealthScore === "number")
+    .sort((a, b) => a.recentHealthScore - b.recentHealthScore)[0];
   const totalEvents = analyticsPreview?.totalEvents ?? 0;
   const uniqueUsers = analyticsPreview?.uniqueUsers ?? 0;
   const dauToday    = analyticsPreview?.dauToday ?? 0;
@@ -264,6 +277,11 @@ const OrgDashboard = () => {
               <p className="text-sm text-[#3d6080] mt-1" style={{ fontFamily: "var(--font-mono)" }}>
                 {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
               </p>
+              {lastUpdated && (
+                <p className="text-[10px] text-[#1a7f63] mt-1" style={{ fontFamily: "var(--font-mono)" }}>
+                  Auto refresh every 60s · last sync {lastUpdated.toLocaleTimeString()}
+                </p>
+              )}
             </div>
             {isVerified && (
               <span className="flex items-center gap-1.5 text-[10px] text-[#10d990] px-3 py-1.5 rounded-full border border-[#10d99030] bg-[#10d99010]"
@@ -516,6 +534,56 @@ const OrgDashboard = () => {
                 </div>
               </div>
             )}
+          </motion.div>
+
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.52 }}>
+            <div className="rounded-2xl border border-[#1a2a4a] bg-[#060d18] overflow-hidden"
+              style={{ boxShadow: "0 4px 24px #00000055" }}>
+              <div className="h-[1.5px]" style={{ background: "linear-gradient(90deg,#f43f8e,#f59e0b,transparent)" }} />
+              <div className="px-5 py-4 border-b border-[#1a2a4a]">
+                <p className="text-[10px] text-[#f43f8e] uppercase tracking-widest mb-0.5"
+                  style={{ fontFamily: "var(--font-mono)" }}>Pulse Engine</p>
+                <h2 className="text-sm font-black text-[#e8f4ff] uppercase"
+                  style={{ fontFamily: "var(--font-display)" }}>Project Health Radar</h2>
+              </div>
+              <div className="p-4">
+                {weakestProject ? (
+                  <div className="rounded-xl border border-[#f43f8e20] bg-[#04080f] p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-xs font-black text-[#e8f4ff]">{weakestProject.name}</p>
+                        <p className="text-[10px] text-[#3d6080]" style={{ fontFamily: "var(--font-mono)" }}>
+                          Lowest live score across your projects
+                        </p>
+                      </div>
+                      <div className="px-3 py-1.5 rounded-xl border"
+                        style={{
+                          color: weakestProject.recentHealthScore >= 70 ? "#10d990" : weakestProject.recentHealthScore >= 40 ? "#f59e0b" : "#f43f8e",
+                          borderColor: weakestProject.recentHealthScore >= 70 ? "#10d99030" : weakestProject.recentHealthScore >= 40 ? "#f59e0b30" : "#f43f8e30",
+                          background: weakestProject.recentHealthScore >= 70 ? "#10d99010" : weakestProject.recentHealthScore >= 40 ? "#f59e0b10" : "#f43f8e10",
+                          fontFamily: "var(--font-mono)",
+                        }}>
+                        {weakestProject.recentHealthScore}/100
+                      </div>
+                    </div>
+                    <p className="text-[11px] text-[#8ab4d4] mt-3 leading-relaxed" style={{ fontFamily: "var(--font-mono)" }}>
+                      {weakestProject.recentHealthSummary || "Health engine is evaluating this project."}
+                    </p>
+                    <Link to="/organizer-dashboard/projects"
+                      className="inline-flex items-center gap-1.5 mt-3 text-[10px] text-[#f43f8e] hover:text-[#fb7185] transition-colors"
+                      style={{ fontFamily: "var(--font-mono)" }}>
+                      Open project workspace <ArrowUpRight className="w-3 h-3" />
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-[#1a2a4a] bg-[#04080f] p-4">
+                    <p className="text-[11px] text-[#3d6080]" style={{ fontFamily: "var(--font-mono)" }}>
+                      Health scores auto-populate as alerts and weekly reports run.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
           </motion.div>
 
           {/* Quick Actions */}

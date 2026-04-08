@@ -1,26 +1,60 @@
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useInView } from "framer-motion";
 import { useState, useRef } from "react";
-import { useInView } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
-  Building2, GraduationCap, ShoppingCart, Briefcase,
-  Users, Globe, Terminal, Sparkles, Linkedin, Mail,
-  ArrowRight, Loader2, Heart,
+  Building2,
+  GraduationCap,
+  ShoppingCart,
+  Briefcase,
+  Users,
+  Globe,
+  Terminal,
+  Sparkles,
+  Linkedin,
+  Mail,
+  ArrowRight,
+  Loader2,
+  Heart,
+  Zap,
 } from "lucide-react";
 
-import { Zap } from "lucide-react";
-
-/* ══════════════════════════════════════════════════════
-   USE CASES
-══════════════════════════════════════════════════════ */
-
 const TARGETS = [
-  { icon: GraduationCap, name: "Coaching Centers",   desc: "Student engagement, question difficulty, drop-off heatmaps", color: "#00e5ff" },
-  { icon: Building2,     name: "EdTech Platforms",   desc: "Course completion, section analytics, LMS integration",       color: "#a855f7" },
-  { icon: ShoppingCart,  name: "E-commerce",         desc: "Cart abandonment, checkout funnels, product engagement",      color: "#10d990" },
-  { icon: Briefcase,     name: "SaaS Products",      desc: "Feature adoption, churn prediction, onboarding optimization", color: "#f43f8e" },
-  { icon: Users,         name: "HR & Job Portals",   desc: "Application funnels, candidate behavior, drop analysis",      color: "#f59e0b" },
-  { icon: Globe,         name: "Digital Businesses", desc: "Full-stack analytics for any web or mobile platform",         color: "#7c3aed" },
+  {
+    icon: GraduationCap,
+    name: "Coaching and Exam Platforms",
+    desc: "Track section difficulty, question-level drop-offs, time-on-task, and reattempt behavior.",
+    color: "#00e5ff",
+  },
+  {
+    icon: Building2,
+    name: "EdTech and Learning Apps",
+    desc: "Measure lesson completion, cohort retention, and engagement patterns across learning journeys.",
+    color: "#a855f7",
+  },
+  {
+    icon: ShoppingCart,
+    name: "E-commerce Stores",
+    desc: "Identify cart abandonment, checkout friction, and product-page engagement opportunities.",
+    color: "#10d990",
+  },
+  {
+    icon: Briefcase,
+    name: "SaaS Products",
+    desc: "Monitor feature adoption, onboarding efficiency, churn risk, and conversion performance.",
+    color: "#f43f8e",
+  },
+  {
+    icon: Users,
+    name: "HR and Job Portals",
+    desc: "Analyze candidate journeys, application funnels, and weak points across hiring workflows.",
+    color: "#f59e0b",
+  },
+  {
+    icon: Globe,
+    name: "Digital Businesses",
+    desc: "Deploy a flexible analytics layer across websites, portals, dashboards, and customer apps.",
+    color: "#7c3aed",
+  },
 ];
 
 export const UseCases = () => (
@@ -39,7 +73,7 @@ export const UseCases = () => (
           className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#10d99025] bg-[#10d99008] text-[#10d990] text-[11px] font-semibold mb-6 uppercase tracking-widest"
           style={{ fontFamily: "var(--font-mono)" }}
         >
-          Industries
+          Industry Coverage
         </div>
         <h2
           className="text-4xl md:text-5xl font-black text-[#e8f4ff] mb-5 uppercase tracking-wide"
@@ -47,57 +81,57 @@ export const UseCases = () => (
         >
           Built For
           <br />
-          <span className="text-gradient-cyan">Every Industry</span>
+          <span className="text-gradient-cyan">Modern Digital Teams</span>
         </h2>
-        <p className="text-[#3d6080] max-w-lg mx-auto">
-          Plug PulseIQ into any platform. From EdTech to E-commerce, our engine adapts to your domain.
+        <p className="text-[#3d6080] max-w-2xl mx-auto">
+          PulseIQ adapts to different business models without changing the core promise:
+          understand user behavior, surface friction, and act on the right insights faster.
         </p>
       </motion.div>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {TARGETS.map((t, i) => (
+        {TARGETS.map((target, index) => (
           <motion.div
-            key={t.name}
+            key={target.name}
             initial={{ opacity: 0, y: 28 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-40px" }}
-            transition={{ delay: i * 0.07, duration: 0.6 }}
+            transition={{ delay: index * 0.07, duration: 0.6 }}
             whileHover={{ y: -4, scale: 1.01 }}
-            className="group relative rounded-2xl border border-[#0d2140] bg-[#060d18] overflow-hidden "
+            className="group relative rounded-2xl border border-[#0d2140] bg-[#060d18] overflow-hidden"
             style={{ boxShadow: "0 4px 24px #00000055" }}
           >
             <div
               className="absolute top-0 inset-x-0 h-[1.5px] opacity-60"
-              style={{ background: `linear-gradient(90deg, transparent, ${t.color}, transparent)` }}
+              style={{ background: `linear-gradient(90deg, transparent, ${target.color}, transparent)` }}
             />
             <div className="p-6 flex items-start gap-4">
               <div
                 className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300"
-                style={{ background: `${t.color}15`, border: `1px solid ${t.color}30` }}
+                style={{ background: `${target.color}15`, border: `1px solid ${target.color}30` }}
               >
-                <t.icon className="w-5 h-5" strokeWidth={1.5} style={{ color: t.color }} />
+                <target.icon className="w-5 h-5" strokeWidth={1.5} style={{ color: target.color }} />
               </div>
               <div>
                 <h3
                   className="text-sm font-bold text-[#e8f4ff] mb-1.5 uppercase tracking-wider group-hover:text-white transition-colors"
                   style={{ fontFamily: "var(--font-display)" }}
                 >
-                  {t.name}
+                  {target.name}
                 </h3>
                 <p className="text-xs text-[#3d6080] leading-relaxed group-hover:text-[#8ab4d4] transition-colors duration-300">
-                  {t.desc}
+                  {target.desc}
                 </p>
               </div>
             </div>
             <div
               className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
-              style={{ background: `radial-gradient(circle at 80% 50%, ${t.color}0d 0%, transparent 60%)` }}
+              style={{ background: `radial-gradient(circle at 80% 50%, ${target.color}0d 0%, transparent 60%)` }}
             />
           </motion.div>
         ))}
       </div>
 
-      {/* AI insight showcase */}
       <motion.div
         initial={{ opacity: 0, y: 28 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -119,14 +153,14 @@ export const UseCases = () => (
               className="text-[10px] text-[#00e5ff] uppercase tracking-widest mb-2"
               style={{ fontFamily: "var(--font-mono)" }}
             >
-              ai_insight → edtech_client → high_priority
+              ai_insight - exam_workspace - priority_high
             </p>
             <p className="text-sm text-[#8ab4d4] leading-relaxed">
-              "Math section shows{" "}
-              <span className="text-[#00e5ff] font-bold">28% higher drop-off</span>{" "}
-              vs other sections. Question 8 difficulty spike detected —{" "}
-              <span className="text-[#10d990] font-semibold">reattempt rate: 42%</span>.
-              Recommended action: Add contextual hint or restructure question phrasing."
+              Math completion is running{" "}
+              <span className="text-[#00e5ff] font-bold">28% below the platform average</span>.
+              Question 8 shows a repeated hesitation pattern with a{" "}
+              <span className="text-[#10d990] font-semibold">42% reattempt rate</span>.
+              Recommended action: add a contextual hint and simplify the question prompt.
             </p>
           </div>
         </div>
@@ -135,14 +169,10 @@ export const UseCases = () => (
   </section>
 );
 
-/* ══════════════════════════════════════════════════════
-   TEAM SECTION
-══════════════════════════════════════════════════════ */
-
 const TEAM = [
   {
     name: "Arpan Jain",
-    role: "Lead & Architect",
+    role: "Project Lead and Architect",
     color: "#00e5ff",
     gradient: "from-cyan-500 to-blue-600",
     linkedin: "https://linkedin.com/in/arpan-jain-42386b2a7",
@@ -202,36 +232,33 @@ export const TeamSection = () => (
           className="text-4xl md:text-5xl font-black text-[#e8f4ff] uppercase tracking-wide"
           style={{ fontFamily: "var(--font-display)" }}
         >
-          The <span className="text-gradient-violet">Engineers</span>
+          Built By <span className="text-gradient-violet">PulseIQ Engineers</span>
         </h2>
-        <p className="text-[#3d6080] mt-4 max-w-md mx-auto">
-          GLA University, Mathura — building industry-grade systems from scratch.
+        <p className="text-[#3d6080] mt-4 max-w-2xl mx-auto">
+          Designed and developed at GLA University, Mathura as an industry-ready analytics
+          platform with strong product, engineering, and AI foundations.
         </p>
       </motion.div>
 
       <div className="flex flex-wrap justify-center gap-6">
-        {TEAM.map((member, i) => (
+        {TEAM.map((member, index) => (
           <motion.div
             key={member.name}
             initial={{ opacity: 0, y: 28 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ delay: i * 0.1, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ delay: index * 0.1, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
             whileHover={{ y: -8, scale: 1.02 }}
-            className="relative w-full sm:w-[260px] rounded-2xl border border-[#0d2140] bg-[#060d18] overflow-hidden  group"
+            className="relative w-full sm:w-[260px] rounded-2xl border border-[#0d2140] bg-[#060d18] overflow-hidden group"
             style={{ boxShadow: "0 4px 30px #00000055" }}
           >
-            {/* Top accent bar */}
             <div className={`h-1 w-full bg-gradient-to-r ${member.gradient}`} />
-
-            {/* Hover glow */}
             <div
               className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
               style={{ background: `radial-gradient(circle at 50% 30%, ${member.color}10 0%, transparent 70%)` }}
             />
 
             <div className="px-5 pb-6 pt-4">
-              {/* Avatar */}
               <div className="relative w-16 h-16 mb-4 mx-auto">
                 <div
                   className={`w-full h-full rounded-2xl bg-gradient-to-br ${member.gradient} flex items-center justify-center text-2xl font-black text-white group-hover:rotate-3 transition-transform duration-500`}
@@ -296,15 +323,11 @@ export const TeamSection = () => (
         className="text-center mt-10 text-[11px] text-[#3d6080] uppercase tracking-widest"
         style={{ fontFamily: "var(--font-mono)" }}
       >
-        Under the supervision of Mr. Shiv Kumar Verma · Dept. of Computer Engineering Application
+        Under the supervision of Mr. Shiv Kumar Verma - Department of Computer Engineering Application
       </motion.div>
     </div>
   </section>
 );
-
-/* ══════════════════════════════════════════════════════
-   CTA SECTION
-══════════════════════════════════════════════════════ */
 
 export const CTASection = () => {
   const ref = useRef(null);
@@ -312,40 +335,42 @@ export const CTASection = () => {
   const [status, setStatus] = useState("");
   const [toast, setToast] = useState(null);
 
-  const showToast = (type, msg) => {
-    setToast({ type, msg });
+  const showToast = (type, message) => {
+    setToast({ type, message });
     setTimeout(() => setToast(null), 4000);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
     setStatus("loading");
-    const fd = new FormData(e.target);
-    fd.append("access_key", "7204ba5c-6385-4e57-bdc7-d4bf451f23c7");
+    const formData = new FormData(event.target);
+    formData.append("access_key", "7204ba5c-6385-4e57-bdc7-d4bf451f23c7");
+
     try {
-      const res = await fetch("https://api.web3forms.com/submit", {
+      const response = await fetch("https://api.web3forms.com/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify(Object.fromEntries(fd)),
+        body: JSON.stringify(Object.fromEntries(formData)),
       });
-      const data = await res.json();
+      const data = await response.json();
+
       if (data.success) {
         setStatus("done");
-        e.target.reset();
-        showToast("success", "✅ You're on the list!");
-      } else {
-        setStatus("");
-        showToast("error", "❌ Failed. Try again.");
+        event.target.reset();
+        showToast("success", "Request submitted successfully.");
+        return;
       }
+
+      setStatus("");
+      showToast("error", "We could not submit your request. Please try again.");
     } catch {
       setStatus("");
-      showToast("error", "❌ Network error.");
+      showToast("error", "Network error. Please try again in a moment.");
     }
   };
 
   return (
     <section className="py-28 px-6 relative overflow-hidden bg-[#020408]" ref={ref}>
-      {/* Toast */}
       <AnimatePresence>
         {toast && (
           <motion.div
@@ -359,7 +384,7 @@ export const CTASection = () => {
             }`}
             style={{ fontFamily: "var(--font-mono)" }}
           >
-            {toast.msg}
+            {toast.message}
           </motion.div>
         )}
       </AnimatePresence>
@@ -379,16 +404,14 @@ export const CTASection = () => {
         >
           <div className="absolute inset-0 bg-gradient-to-br from-[#00e5ff05] via-transparent to-[#7c3aed05] pointer-events-none rounded-3xl" />
 
-          {/* Corner brackets */}
-          {["top-0 left-0", "top-0 right-0", "bottom-0 left-0", "bottom-0 right-0"].map((pos, i) => (
-            <div key={i} className={`absolute ${pos} w-10 h-10 pointer-events-none`}>
-              <div className={`absolute ${i < 2 ? "top-0" : "bottom-0"} ${i % 2 === 0 ? "left-0" : "right-0"} w-full h-px bg-[#00e5ff44]`} />
-              <div className={`absolute ${i < 2 ? "top-0" : "bottom-0"} ${i % 2 === 0 ? "left-0" : "right-0"} w-px h-full bg-[#00e5ff44]`} />
+          {["top-0 left-0", "top-0 right-0", "bottom-0 left-0", "bottom-0 right-0"].map((position, index) => (
+            <div key={index} className={`absolute ${position} w-10 h-10 pointer-events-none`}>
+              <div className={`absolute ${index < 2 ? "top-0" : "bottom-0"} ${index % 2 === 0 ? "left-0" : "right-0"} w-full h-px bg-[#00e5ff44]`} />
+              <div className={`absolute ${index < 2 ? "top-0" : "bottom-0"} ${index % 2 === 0 ? "left-0" : "right-0"} w-px h-full bg-[#00e5ff44]`} />
             </div>
           ))}
 
           <div className="relative z-10">
-            {/* Icon */}
             <motion.div
               initial={{ scale: 0 }}
               animate={inView ? { scale: 1 } : {}}
@@ -403,14 +426,14 @@ export const CTASection = () => {
               className="text-3xl md:text-5xl font-black text-[#e8f4ff] mb-4 uppercase tracking-wide leading-tight"
               style={{ fontFamily: "var(--font-display)" }}
             >
-              STOP GUESSING.
+              Turn Every Click Into
               <br />
-              <span className="text-gradient-cyan">START KNOWING.</span>
+              <span className="text-gradient-cyan">Actionable Intelligence</span>
             </h2>
 
-            <p className="text-[#3d6080] mb-10 max-w-md mx-auto">
-              Join teams already using PulseIQ to reduce drop-offs and increase conversions with
-              AI-powered behavioral intelligence.
+            <p className="text-[#3d6080] mb-10 max-w-2xl mx-auto">
+              Launch faster, monitor smarter, and give every stakeholder a clear view of
+              product health with AI-powered analytics, weekly reports, and proactive alerts.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-12">
@@ -418,27 +441,27 @@ export const CTASection = () => {
                 <motion.button
                   whileHover={{ scale: 1.04, boxShadow: "0 0 32px #00e5ff55" }}
                   whileTap={{ scale: 0.97 }}
-                  className="px-8 py-4 bg-[#00e5ff] text-[#020408] font-black rounded-xl  uppercase tracking-widest text-sm flex items-center gap-2"
+                  className="px-8 py-4 bg-[#00e5ff] text-[#020408] font-black rounded-xl uppercase tracking-widest text-sm flex items-center gap-2"
                   style={{ fontFamily: "var(--font-mono)" }}
                 >
-                  Get Started Free <ArrowRight className="w-4 h-4" />
+                  Start Building <ArrowRight className="w-4 h-4" />
                 </motion.button>
               </Link>
-              <button
-                className="px-8 py-4 border border-[#0d2140] text-[#8ab4d4] hover:border-[#00e5ff33] hover:text-[#00e5ff] rounded-xl  uppercase tracking-widest text-sm transition-colors duration-300"
+              <Link
+                to="/demo"
+                className="px-8 py-4 border border-[#0d2140] text-[#8ab4d4] hover:border-[#00e5ff33] hover:text-[#00e5ff] rounded-xl uppercase tracking-widest text-sm transition-colors duration-300"
                 style={{ fontFamily: "var(--font-mono)" }}
               >
-                Book Demo
-              </button>
+                Explore Demo
+              </Link>
             </div>
 
-            {/* Waitlist form */}
             <div className="pt-10 border-t border-[#0d2140]">
               <p
                 className="text-[10px] text-[#3d6080] uppercase tracking-[0.2em] mb-5"
                 style={{ fontFamily: "var(--font-mono)" }}
               >
-                — Join Waitlist for Early Access —
+                Request early access
               </p>
 
               <form onSubmit={handleSubmit} className="max-w-lg mx-auto space-y-3">
@@ -448,7 +471,7 @@ export const CTASection = () => {
                       key={field}
                       type={field}
                       name={field}
-                      placeholder={field === "name" ? "Your Name" : "Email Address"}
+                      placeholder={field === "name" ? "Your name" : "Work email"}
                       required
                       disabled={status === "loading" || status === "done"}
                       className="w-full px-4 py-3 rounded-xl border border-[#0d2140] bg-[#04080f] text-[#8ab4d4] placeholder:text-[#3d6080] outline-none focus:border-[#00e5ff33] focus:ring-1 focus:ring-[#00e5ff22] transition-all text-sm disabled:opacity-50"
@@ -458,7 +481,7 @@ export const CTASection = () => {
                 </div>
                 <textarea
                   name="message"
-                  placeholder="Tell us about your project..."
+                  placeholder="Tell us about your website, app, or analytics use case."
                   required
                   rows={3}
                   disabled={status === "loading" || status === "done"}
@@ -470,15 +493,18 @@ export const CTASection = () => {
                   whileTap={{ scale: 0.98 }}
                   type="submit"
                   disabled={status === "loading" || status === "done"}
-                  className="w-full py-3.5 rounded-xl font-bold text-[#020408] bg-gradient-to-r from-[#00e5ff] to-[#7c3aed]  uppercase tracking-widest text-sm disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="w-full py-3.5 rounded-xl font-bold text-[#020408] bg-gradient-to-r from-[#00e5ff] to-[#7c3aed] uppercase tracking-widest text-sm disabled:opacity-50 flex items-center justify-center gap-2"
                   style={{ fontFamily: "var(--font-mono)" }}
                 >
                   {status === "loading" ? (
-                    <><Loader2 className="w-4 h-4 animate-spin" />Submitting…</>
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Submitting...
+                    </>
                   ) : status === "done" ? (
-                    "🎉 You're on the list!"
+                    "Request received"
                   ) : (
-                    "Reserve Your Spot →"
+                    "Join the waitlist"
                   )}
                 </motion.button>
               </form>
@@ -490,35 +516,32 @@ export const CTASection = () => {
   );
 };
 
-/* ══════════════════════════════════════════════════════
-   FOOTER
-══════════════════════════════════════════════════════ */
-
 const FOOTER_COLS = [
   {
     title: "Product",
     links: [
-      { label: "Features",      href: "#features" },
-      { label: "How It Works",  href: "#how-it-works" },
-      { label: "Use Cases",     href: "#use-cases" },
-      { label: "Pricing — Soon" },
+      { label: "Features", href: "#features" },
+      { label: "How It Works", href: "#how-it-works" },
+      { label: "Use Cases", href: "#use-cases" },
+      { label: "Private Demo", to: "/demo" },
     ],
   },
   {
     title: "Company",
     links: [
-      { label: "Team",        href: "#team" },
+      { label: "Team", href: "#team" },
       { label: "Help Center", to: "/help" },
-      { label: "Blog — Soon" },
-      { label: "Careers" },
+      { label: "Login", to: "/login" },
+      { label: "Sign Up", to: "/signup" },
     ],
   },
   {
-    title: "Account",
+    title: "Platform",
     links: [
-      { label: "Login",      to: "/login" },
-      { label: "Sign Up",    to: "/signup" },
-      { label: "Docs — Soon" },
+      { label: "Multi-Tenant SaaS" },
+      { label: "AI Insights Engine" },
+      { label: "Weekly Reporting" },
+      { label: "Role-Based Access" },
     ],
   },
 ];
@@ -527,8 +550,6 @@ export const Footer = () => (
   <footer className="border-t border-[#0d2140] py-14 px-6 bg-[#04080f]">
     <div className="max-w-6xl mx-auto">
       <div className="grid md:grid-cols-4 gap-10 mb-10">
-
-        {/* Brand — new animated hex logo */}
         <div className="md:col-span-1">
           <Link to="/" className="flex items-center gap-3 group select-none mb-4 w-fit">
             <div className="relative w-9 h-9">
@@ -563,55 +584,55 @@ export const Footer = () => (
                 className="text-[10px] font-light tracking-[0.4em] text-[#8ab4d4] uppercase"
                 style={{ fontFamily: "var(--font-mono)" }}
               >
-                IQ / v2.0
+                IQ / SaaS
               </span>
             </div>
           </Link>
 
           <p
-            className="text-xs text-[#3d6080] leading-relaxed max-w-[180px]"
+            className="text-xs text-[#3d6080] leading-relaxed max-w-[220px]"
             style={{ fontFamily: "var(--font-mono)" }}
           >
-            AI-powered analytics. Real-time intelligence. Actionable decisions.
+            AI-powered analytics for websites and applications, built to help teams move from raw
+            data to confident decisions.
           </p>
         </div>
 
-        {/* Nav columns */}
-        {FOOTER_COLS.map((col) => (
-          <div key={col.title}>
+        {FOOTER_COLS.map((column) => (
+          <div key={column.title}>
             <h4
               className="text-[10px] font-bold text-[#8ab4d4] mb-4 uppercase tracking-widest"
               style={{ fontFamily: "var(--font-mono)" }}
             >
-              {col.title}
+              {column.title}
             </h4>
             <div className="flex flex-col gap-2.5">
-              {col.links.map((l) =>
-                l.href ? (
+              {column.links.map((link) =>
+                link.href ? (
                   <a
-                    key={l.label}
-                    href={l.href}
+                    key={link.label}
+                    href={link.href}
                     className="text-xs text-[#3d6080] hover:text-[#00e5ff] transition-colors uppercase tracking-wide"
                     style={{ fontFamily: "var(--font-mono)" }}
                   >
-                    {l.label}
+                    {link.label}
                   </a>
-                ) : l.to ? (
+                ) : link.to ? (
                   <Link
-                    key={l.label}
-                    to={l.to}
+                    key={link.label}
+                    to={link.to}
                     className="text-xs text-[#3d6080] hover:text-[#00e5ff] transition-colors uppercase tracking-wide"
                     style={{ fontFamily: "var(--font-mono)" }}
                   >
-                    {l.label}
+                    {link.label}
                   </Link>
                 ) : (
                   <span
-                    key={l.label}
+                    key={link.label}
                     className="text-xs text-[#1a3a6b] uppercase tracking-wide"
                     style={{ fontFamily: "var(--font-mono)" }}
                   >
-                    {l.label}
+                    {link.label}
                   </span>
                 )
               )}
@@ -620,21 +641,16 @@ export const Footer = () => (
         ))}
       </div>
 
-      {/* Bottom bar */}
       <div className="border-t border-[#0d2140] pt-8 flex flex-col md:flex-row items-center justify-between gap-3">
         <p
           className="text-[11px] text-[#3d6080] flex items-center gap-1.5"
           style={{ fontFamily: "var(--font-mono)" }}
         >
-          Built with{" "}
-          <Heart className="w-3 h-3 text-[#f43f8e] fill-[#f43f8e]" />{" "}
-          by Arpan Jain &amp; Team · GLA University, Mathura
+          Built with <Heart className="w-3 h-3 text-[#f43f8e] fill-[#f43f8e]" /> by Arpan Jain and Team
+          at GLA University, Mathura
         </p>
-        <p
-          className="text-[10px] text-[#1a3a6b]"
-          style={{ fontFamily: "var(--font-mono)" }}
-        >
-          © {new Date().getFullYear()} PulseIQ Analytics. All rights reserved.
+        <p className="text-[10px] text-[#1a3a6b]" style={{ fontFamily: "var(--font-mono)" }}>
+          Copyright {new Date().getFullYear()} PulseIQ Analytics. All rights reserved.
         </p>
       </div>
     </div>

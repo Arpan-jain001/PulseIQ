@@ -7,7 +7,7 @@ import {
   Lock, XCircle, Info, BrainCircuit, MessageSquare,
   Send, Sparkles, ArrowUpRight, ArrowDownRight,
   Target, AlertCircle, Eye, Globe, Clock, ChevronRight,
-  BarChart2, Layers, Code2
+  BarChart2, Layers, Code2, DatabaseZap
 } from "lucide-react";
 import {
   AreaChart, Area, BarChart, Bar, LineChart, Line,
@@ -449,9 +449,9 @@ const NotVerifiedScreen = ({ project, verifySdk, onSetup, onSkip, onVerified }) 
 const OrgAnalytics = () => {
   const {
     getMyWorkspaces, getProjects, getAnalyticsOverview, getDau,
-    getMau, getPageAnalytics, getRetention, getEventTrend,
+    getMau, getPageAnalytics, getRetention, getEventTrend, getHeatmap, getSessions, getExamAnalytics,
     getAiInsights, askAiChat, getPageAiInsights,
-    verifySdk, skipVerification, loading
+    verifySdk, skipVerification, generateDemoData, loading
   } = useOrgApi();
 
   const [workspaces, setWorkspaces]   = useState([]);
@@ -464,10 +464,15 @@ const OrgAnalytics = () => {
   const [retentionData, setRetentionData] = useState([]);
   const [eventTrendData, setEventTrendData] = useState([]);
   const [pageData, setPageData]       = useState([]);
+  const [heatmapData, setHeatmapData] = useState(null);
+  const [sessionData, setSessionData] = useState(null);
+  const [examData, setExamData]       = useState(null);
   const [dateRange, setDateRange]     = useState("7d");
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [showSdkDrawer, setShowSdkDrawer] = useState(false);
   const [activeTab, setActiveTab]     = useState("overview");
+  const [demoSeedLoading, setDemoSeedLoading] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // AI state
   const [aiData, setAiData]           = useState(null);
@@ -531,7 +536,10 @@ const OrgAnalytics = () => {
       fetch(`${BASE}/api/analytics/retention?projectId=${id}&from=${from}&to=${to}`,      { headers:authHdr() }).then(r=>r.json()),
       fetch(`${BASE}/api/analytics/event-trend?projectId=${id}&from=${from}&to=${to}`,    { headers:authHdr() }).then(r=>r.json()),
       fetch(`${BASE}/api/analytics/page-analytics?projectId=${id}&from=${from}&to=${to}`, { headers:authHdr() }).then(r=>r.json()),
-    ]).then(([ov, dau, mau_, ret, trend, pg]) => {
+      fetch(`${BASE}/api/analytics/heatmap?projectId=${id}&from=${from}&to=${to}`,        { headers:authHdr() }).then(r=>r.json()),
+      fetch(`${BASE}/api/analytics/sessions?projectId=${id}&from=${from}&to=${to}`,       { headers:authHdr() }).then(r=>r.json()),
+      fetch(`${BASE}/api/analytics/exam?projectId=${id}&from=${from}&to=${to}`,           { headers:authHdr() }).then(r=>r.json()),
+    ]).then(([ov, dau, mau_, ret, trend, pg, hm, sess, exam]) => {
       setOverview(ov?.data);
       setDauData((dau?.data||[]).map(d => ({ date:d._id?.slice(5)||"", users:d.activeUsers||0 })));
       setMauCount(mau_?.data ?? null);
@@ -544,8 +552,11 @@ const OrgAnalytics = () => {
       });
       setEventTrendData(Object.values(tMap).slice(-14));
       setPageData(pg?.data?.pages || []);
+      setHeatmapData(hm?.data || null);
+      setSessionData(sess?.data || null);
+      setExamData(exam?.data || null);
     }).finally(() => setAnalyticsLoading(false));
-  }, [selectedProj?._id, dateRange]);
+  }, [selectedProj?._id, dateRange, refreshKey]);
 
   const loadAiInsights = useCallback(async () => {
     if (!selectedProj || !canAccess(selectedProj)) return;
@@ -567,6 +578,7 @@ const OrgAnalytics = () => {
     const list  = await refreshProjects();
     const fresh = list.find(p => p._id === selectedProj?._id);
     if (fresh) setSelectedProj(fresh);
+    setRefreshKey((value) => value + 1);
   };
 
   const handleSkip = async () => {
@@ -575,7 +587,23 @@ const OrgAnalytics = () => {
       const list  = await refreshProjects();
       const fresh = list.find(p => p._id === selectedProj?._id);
       if (fresh) setSelectedProj({ ...fresh, skippedVerification:true });
+      setRefreshKey((value) => value + 1);
     } catch {}
+  };
+
+  const handleGenerateDemoData = async () => {
+    if (!selectedProj) return;
+    setDemoSeedLoading(true);
+    try {
+      await generateDemoData(selectedProj._id, 21);
+      const list = await refreshProjects();
+      const fresh = list.find((p) => p._id === selectedProj._id);
+      if (fresh) setSelectedProj(fresh);
+      setRefreshKey((value) => value + 1);
+    } catch {}
+    finally {
+      setDemoSeedLoading(false);
+    }
   };
 
   const wsProjects = selectedWs ? projects.filter(p => (p.workspaceId?._id||p.workspaceId) === selectedWs._id) : [];
@@ -589,6 +617,7 @@ const OrgAnalytics = () => {
     { id:"pages",     label:"Pages",       icon:Globe        },
     { id:"events",    label:"Events",      icon:Activity     },
     { id:"retention", label:"Retention",   icon:Users        },
+    { id:"journeys",  label:"Journeys",    icon:Eye          },
     { id:"ai",        label:"AI Insights", icon:BrainCircuit },
   ];
 
@@ -611,7 +640,7 @@ const OrgAnalytics = () => {
                   {r}
                 </button>
               ))}
-              <motion.button whileTap={{ scale:0.95 }} onClick={loadAll}
+              <motion.button whileTap={{ scale:0.95 }} onClick={() => { loadAll(); setRefreshKey((value) => value + 1); }}
                 className="px-3 py-2 rounded-xl border border-[#1a2a4a] text-[#3d6080] hover:text-[#10d990] hover:border-[#10d99033] transition-all">
                 <RefreshCw className="w-4 h-4"/>
               </motion.button>
@@ -695,6 +724,45 @@ const OrgAnalytics = () => {
                 </button>
               </div>
             )}
+
+            <div className="mb-5 flex items-center justify-between gap-3 rounded-xl border border-[#1a2a4a] bg-[#04080f] p-3">
+              <div>
+                <p className="text-[10px] uppercase tracking-widest text-[#10d990]" style={{ fontFamily:"var(--font-mono)" }}>
+                  Detected Category
+                </p>
+                <p className="text-sm font-bold text-[#e8f4ff]">
+                  {overview?.category?.label || selectedProj.categoryLabel || "General Web App"}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-[10px] uppercase tracking-widest text-[#3d6080]" style={{ fontFamily:"var(--font-mono)" }}>
+                  Journey Mode
+                </p>
+                <p className="text-[11px] text-[#8ab4d4]" style={{ fontFamily:"var(--font-mono)" }}>
+                  {overview?.category?.journeysLabel || "User journeys"}
+                </p>
+              </div>
+            </div>
+
+            <div className="mb-5 flex items-center justify-between gap-3 rounded-xl border border-[#1a2a4a] bg-[#04080f] p-3 flex-wrap">
+              <div>
+                <p className="text-[10px] uppercase tracking-widest text-[#00e5ff]" style={{ fontFamily:"var(--font-mono)" }}>
+                  Real Data Bootstrap
+                </p>
+                <p className="text-[11px] text-[#8ab4d4]" style={{ fontFamily:"var(--font-mono)" }}>
+                  Empty dashboard? Generate a live dataset in MongoDB for this project and unlock charts instantly.
+                </p>
+              </div>
+              <button
+                onClick={handleGenerateDemoData}
+                disabled={demoSeedLoading}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl border border-[#00e5ff30] text-[#00e5ff] hover:bg-[#00e5ff10] transition-all text-[10px] uppercase tracking-widest font-bold disabled:opacity-60"
+                style={{ fontFamily:"var(--font-mono)" }}
+              >
+                <DatabaseZap className="w-3.5 h-3.5" />
+                {demoSeedLoading ? "Generating..." : "Generate Live Data"}
+              </button>
+            </div>
 
             {/* Tabs */}
             <div className="flex gap-2 flex-wrap mb-6">
@@ -1059,6 +1127,122 @@ const OrgAnalytics = () => {
                         })}
                       </div>
                     </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {activeTab==="journeys" && (
+                <motion.div key="journeys" initial={{ opacity:0, y:10 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0, y:-10 }}>
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-5">
+                    <div className="rounded-2xl border border-[#1a2a4a] bg-[#060d18] p-5" style={{ boxShadow:"0 4px 24px #00000055" }}>
+                      <p className="text-[10px] text-[#f59e0b] uppercase tracking-widest mb-0.5" style={{ fontFamily:"var(--font-mono)" }}>Heatmap</p>
+                      <h3 className="text-sm font-black text-[#e8f4ff] uppercase mb-4" style={{ fontFamily:"var(--font-display)" }}>Interaction Readiness</h3>
+                      <div className="grid grid-cols-2 gap-3 mb-3">
+                        <div className="p-3 rounded-xl bg-[#04080f] border border-[#1a2a4a]">
+                          <p className="text-lg font-black text-[#f59e0b]" style={{ fontFamily:"var(--font-display)" }}>{heatmapData?.points?.length || 0}</p>
+                          <p className="text-[9px] text-[#3d6080] uppercase tracking-wider" style={{ fontFamily:"var(--font-mono)" }}>Click clusters</p>
+                        </div>
+                        <div className="p-3 rounded-xl bg-[#04080f] border border-[#1a2a4a]">
+                          <p className="text-lg font-black text-[#a855f7]" style={{ fontFamily:"var(--font-display)" }}>{heatmapData?.scrollDepth?.[0]?.avgScrollDepth ?? 0}%</p>
+                          <p className="text-[9px] text-[#3d6080] uppercase tracking-wider" style={{ fontFamily:"var(--font-mono)" }}>Avg scroll</p>
+                        </div>
+                      </div>
+                      <p className="text-[11px] text-[#8ab4d4] leading-relaxed" style={{ fontFamily:"var(--font-mono)" }}>
+                        {heatmapData?.hasCoordinateData
+                          ? "Coordinate click data is available. PulseIQ can now evolve into true click heatmaps from tracked x/y positions."
+                          : "No coordinate-based click payloads detected yet. Send x/y coordinates from the tracking SDK to unlock true click heatmaps."}
+                      </p>
+                    </div>
+
+                    <div className="rounded-2xl border border-[#1a2a4a] bg-[#060d18] p-5" style={{ boxShadow:"0 4px 24px #00000055" }}>
+                      <p className="text-[10px] text-[#00e5ff] uppercase tracking-widest mb-0.5" style={{ fontFamily:"var(--font-mono)" }}>Session Journey</p>
+                      <h3 className="text-sm font-black text-[#e8f4ff] uppercase mb-4" style={{ fontFamily:"var(--font-display)" }}>
+                        {overview?.category?.journeysLabel || "User Journeys"}
+                      </h3>
+                      <div className="grid grid-cols-2 gap-3 mb-3">
+                        <div className="p-3 rounded-xl bg-[#04080f] border border-[#1a2a4a]">
+                          <p className="text-lg font-black text-[#00e5ff]" style={{ fontFamily:"var(--font-display)" }}>{sessionData?.summary?.totalSessions ?? 0}</p>
+                          <p className="text-[9px] text-[#3d6080] uppercase tracking-wider" style={{ fontFamily:"var(--font-mono)" }}>Sessions</p>
+                        </div>
+                        <div className="p-3 rounded-xl bg-[#04080f] border border-[#1a2a4a]">
+                          <p className="text-lg font-black text-[#10d990]" style={{ fontFamily:"var(--font-display)" }}>{sessionData?.summary?.avgDurationSeconds ?? 0}s</p>
+                          <p className="text-[9px] text-[#3d6080] uppercase tracking-wider" style={{ fontFamily:"var(--font-mono)" }}>Avg duration</p>
+                        </div>
+                      </div>
+                      <p className="text-[11px] text-[#8ab4d4] leading-relaxed" style={{ fontFamily:"var(--font-mono)" }}>
+                        PulseIQ now groups recent behavior into journey sessions so you can inspect event flow and engagement depth instead of isolated counts only.
+                      </p>
+                    </div>
+
+                    <div className="rounded-2xl border border-[#1a2a4a] bg-[#060d18] p-5" style={{ boxShadow:"0 4px 24px #00000055" }}>
+                      <p className="text-[10px] text-[#f43f8e] uppercase tracking-widest mb-0.5" style={{ fontFamily:"var(--font-mono)" }}>Exam Analytics</p>
+                      <h3 className="text-sm font-black text-[#e8f4ff] uppercase mb-4" style={{ fontFamily:"var(--font-display)" }}>
+                        {overview?.category?.key === "edtech" ? "Coaching & EdTech Signals" : "Category-Specific Signals"}
+                      </h3>
+                      <div className="grid grid-cols-2 gap-3 mb-3">
+                        <div className="p-3 rounded-xl bg-[#04080f] border border-[#1a2a4a]">
+                          <p className="text-lg font-black text-[#f43f8e]" style={{ fontFamily:"var(--font-display)" }}>{examData?.questionDropOffs?.[0]?.quits ?? 0}</p>
+                          <p className="text-[9px] text-[#3d6080] uppercase tracking-wider" style={{ fontFamily:"var(--font-mono)" }}>Top quits</p>
+                        </div>
+                        <div className="p-3 rounded-xl bg-[#04080f] border border-[#1a2a4a]">
+                          <p className="text-lg font-black text-[#f59e0b]" style={{ fontFamily:"var(--font-display)" }}>{examData?.reattempts?.[0]?.reattemptRate ?? 0}%</p>
+                          <p className="text-[9px] text-[#3d6080] uppercase tracking-wider" style={{ fontFamily:"var(--font-mono)" }}>Reattempt rate</p>
+                        </div>
+                      </div>
+                      <p className="text-[11px] text-[#8ab4d4] leading-relaxed" style={{ fontFamily:"var(--font-mono)" }}>
+                        {overview?.category?.key === "edtech"
+                          ? examData?.hasExamSignals
+                            ? "Exam-specific signals are being detected, including question drop-offs, section friction, and reattempt behavior."
+                            : "No exam-specific event stream detected yet. Track question quits, retries, and timeSpent payloads to unlock this module."
+                          : `This project is classified as ${overview?.category?.label || "General Web App"}, so PulseIQ prioritizes ${overview?.category?.journeysLabel?.toLowerCase() || "user journeys"} over exam-only reporting.`}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                    <div className="rounded-2xl border border-[#1a2a4a] bg-[#060d18] p-5" style={{ boxShadow:"0 4px 24px #00000055" }}>
+                      <p className="text-[10px] text-[#00e5ff] uppercase tracking-widest mb-0.5" style={{ fontFamily:"var(--font-mono)" }}>Recent Journeys</p>
+                      <h3 className="text-sm font-black text-[#e8f4ff] uppercase mb-4" style={{ fontFamily:"var(--font-display)" }}>Latest Session Paths</h3>
+                      <div className="space-y-3">
+                        {(sessionData?.sessions || []).slice(0,4).map((s, i) => (
+                          <div key={s.sessionId || i} className="p-3 rounded-xl bg-[#04080f] border border-[#1a2a4a]">
+                            <div className="flex items-center justify-between mb-1">
+                              <p className="text-xs font-bold text-[#e8f4ff]">{s.userKey || "anonymous"}</p>
+                              <p className="text-[9px] text-[#3d6080]" style={{ fontFamily:"var(--font-mono)" }}>{s.durationSeconds}s</p>
+                            </div>
+                            <p className="text-[10px] text-[#8ab4d4] leading-relaxed" style={{ fontFamily:"var(--font-mono)" }}>
+                              {(s.events || []).map(e => e.eventName).join(" → ") || "No event chain"}
+                            </p>
+                          </div>
+                        ))}
+                        {!sessionData?.sessions?.length && (
+                          <p className="text-[11px] text-[#3d6080]" style={{ fontFamily:"var(--font-mono)" }}>No session journeys available yet.</p>
+                        )}
+                      </div>
+                    </div>
+
+                    {(overview?.category?.key === "edtech" || examData?.hasExamSignals) && (
+                    <div className="rounded-2xl border border-[#1a2a4a] bg-[#060d18] p-5" style={{ boxShadow:"0 4px 24px #00000055" }}>
+                      <p className="text-[10px] text-[#f43f8e] uppercase tracking-widest mb-0.5" style={{ fontFamily:"var(--font-mono)" }}>Exam Detail</p>
+                      <h3 className="text-sm font-black text-[#e8f4ff] uppercase mb-4" style={{ fontFamily:"var(--font-display)" }}>Question & Section Signals</h3>
+                      <div className="space-y-3">
+                        {(examData?.questionDropOffs || []).slice(0,4).map((item, i) => (
+                          <div key={`${item.questionId}-${i}`} className="p-3 rounded-xl bg-[#04080f] border border-[#1a2a4a]">
+                            <div className="flex items-center justify-between mb-1">
+                              <p className="text-xs font-bold text-[#e8f4ff]">{item.questionId}</p>
+                              <p className="text-[9px] text-[#f43f8e]" style={{ fontFamily:"var(--font-mono)" }}>{item.quits} exits</p>
+                            </div>
+                            <p className="text-[10px] text-[#3d6080]" style={{ fontFamily:"var(--font-mono)" }}>
+                              Section: {item.section || "General"}
+                            </p>
+                          </div>
+                        ))}
+                        {!examData?.questionDropOffs?.length && (
+                          <p className="text-[11px] text-[#3d6080]" style={{ fontFamily:"var(--font-mono)" }}>No exam question signal detected yet.</p>
+                        )}
+                      </div>
+                    </div>
+                    )}
                   </div>
                 </motion.div>
               )}

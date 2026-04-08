@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { UserPlus, Trash2, Shield, Eye, EyeOff, X, RefreshCw, UserMinus, AlertTriangle } from "lucide-react";
 import AdminLayout from "../components/AdminLayout";
 import { useAdminApi } from "../hooks/useAdminApi";
+import TypedDeleteModal from "../../components/TypedDeleteModal";
 
 /* ── Toast ── */
 const Toast = ({ toast }) => {
@@ -187,48 +188,6 @@ const RemoveAdminModal = ({ admin, onClose, onConfirm }) => {
   );
 };
 
-/* ── Delete Admin Modal (hard delete) ── */
-const DeleteAdminModal = ({ admin, onClose, onConfirm }) => {
-  const [deleting, setDeleting] = useState(false);
-  const handleDelete = async () => {
-    setDeleting(true);
-    try { await onConfirm(admin._id); onClose(); }
-    catch {}
-    finally { setDeleting(false); }
-  };
-  return (
-    <motion.div className="fixed inset-0 z-[9999] flex items-center justify-center px-4"
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
-      <motion.div className="relative w-full max-w-sm rounded-2xl overflow-hidden"
-        initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }}
-        style={{ background: "linear-gradient(135deg,#0d1117,#161b22)", border: "1px solid #f43f8e22", boxShadow: "0 0 60px #00000099" }}>
-        <div className="h-[2px] bg-gradient-to-r from-[#f43f8e] to-transparent" />
-        <div className="p-6 text-center">
-          <div className="w-12 h-12 rounded-2xl bg-[#f43f8e0a] border border-[#f43f8e30] flex items-center justify-center mx-auto mb-4">
-            <Trash2 className="w-5 h-5 text-[#f43f8e]" />
-          </div>
-          <h3 className="text-sm font-black text-[#e8f4ff] mb-2 uppercase" style={{ fontFamily: "var(--font-display)" }}>Delete Admin</h3>
-          <p className="text-xs text-[#3d6080] mb-5" style={{ fontFamily: "var(--font-mono)" }}>
-            Permanently delete <span className="text-[#f43f8e]">"{admin.name}"</span>?
-            This cannot be undone. Their account will be completely removed.
-          </p>
-          <div className="flex gap-3">
-            <button onClick={onClose}
-              className="flex-1 py-2.5 rounded-xl border border-[#1a2a4a] text-[#8ab4d4] text-xs uppercase tracking-widest"
-              style={{ fontFamily: "var(--font-mono)" }}>Cancel</button>
-            <motion.button whileTap={{ scale: 0.98 }} onClick={handleDelete} disabled={deleting}
-              className="flex-1 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest text-white disabled:opacity-50"
-              style={{ background: "#f43f8e", fontFamily: "var(--font-mono)" }}>
-              {deleting ? "Deleting..." : "Delete"}
-            </motion.button>
-          </div>
-        </div>
-      </motion.div>
-    </motion.div>
-  );
-};
-
 /* ── Main AdminAdmins ── */
 const AdminAdmins = () => {
   const { getAdmins, createAdmin, deleteAdmin, removeAdmin, loading } = useAdminApi();
@@ -263,9 +222,10 @@ const AdminAdmins = () => {
     } catch (e) { showToast("error", e.message || "Failed to remove admin."); }
   };
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (id, confirmation) => {
     try {
-      await deleteAdmin(id);
+      await deleteAdmin(id, confirmation);
+      setDeleteModal(null);
       showToast("success", "Admin account deleted.");
       load();
     } catch (e) { showToast("error", e.message || "Failed to delete."); }
@@ -403,10 +363,13 @@ const AdminAdmins = () => {
           />
         )}
         {deleteModal && (
-          <DeleteAdminModal
-            admin={deleteModal}
-            onClose={() => setDeleteModal(null)}
-            onConfirm={handleDelete}
+          <TypedDeleteModal
+            title="Delete Admin"
+            itemName={deleteModal.name}
+            description={`Permanently delete "${deleteModal.name}"? Their account and owned data will be removed forever.`}
+            deleting={loading}
+            onCancel={() => setDeleteModal(null)}
+            onConfirm={(confirmation) => handleDelete(deleteModal._id, confirmation)}
           />
         )}
       </AnimatePresence>

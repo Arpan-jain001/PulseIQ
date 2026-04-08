@@ -4,15 +4,114 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   FolderKanban, Plus, X, RefreshCw, Copy, Eye, EyeOff,
   Key, Trash2, Check, Pencil, ChevronDown, ChevronUp,
-  Terminal, Code2, Globe, Download, AlertTriangle, FileCode2
+  Terminal, Code2, Globe, Download, AlertTriangle, FileCode2, DatabaseZap
 } from "lucide-react";
 import OrgLayout from "../components/OrgLayout";
 import ApiKeySetupModal from "../components/ApiKeySetupModal";
 import SdkSetupDrawer from "../components/SdkSetupDrawer";
 import { useOrgApi } from "../hooks/useOrgApi";
 import { useAuth } from "../../hooks/useAuth";
+import TypedDeleteModal from "../../components/TypedDeleteModal";
 
 const BASE_URL = import.meta.env.VITE_BACKEND_API_URL;
+
+const normalizeDomainInput = (value = "") => {
+  const text = String(value || "").trim();
+  if (!text) return "";
+
+  const wildcard = text.startsWith("*.");
+  const raw = wildcard ? text.slice(2) : text;
+
+  try {
+    const parsed = new URL(raw.includes("://") ? raw : `https://${raw}`);
+    const host = parsed.host.toLowerCase().replace(/:\d+$/, "");
+    return wildcard ? `*.${host}` : host;
+  } catch {
+    const host = raw
+      .toLowerCase()
+      .replace(/^https?:\/\//, "")
+      .split("/")[0]
+      .replace(/:\d+$/, "");
+    return host ? (wildcard ? `*.${host}` : host) : "";
+  }
+};
+
+const parseDomainsInput = (value = "") =>
+  Array.from(
+    new Set(
+      String(value || "")
+        .split(",")
+        .map((item) => normalizeDomainInput(item))
+        .filter(Boolean)
+    )
+  );
+
+const validateDomainsInput = (value = "") => {
+  const items = String(value || "")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  const invalid = items.filter((item) => !normalizeDomainInput(item));
+  return {
+    normalized: parseDomainsInput(value),
+    invalid,
+  };
+};
+
+const DomainHelper = ({ value, accent = "#00e5ff" }) => {
+  const { normalized, invalid } = validateDomainsInput(value);
+  const hasDomains = normalized.length > 0;
+
+  return (
+    <div className="mt-2 rounded-xl border border-[#1a2a4a] bg-[#04080f] p-3">
+      <p className="text-[10px] leading-relaxed text-[#8ab4d4]" style={{ fontFamily: "var(--font-mono)" }}>
+        Leave blank to allow events from any client domain. Use exact hosts like `app.example.com`
+        or wildcards like `*.example.com`. Protocols and paths are removed automatically.
+      </p>
+
+      {invalid.length > 0 && (
+        <p
+          className="mt-2 text-[10px] leading-relaxed text-[#f43f8e]"
+          style={{ fontFamily: "var(--font-mono)" }}
+        >
+          Invalid entries: {invalid.join(", ")}
+        </p>
+      )}
+
+      <div className="mt-2 flex flex-wrap gap-2">
+        {hasDomains ? (
+          normalized.map((domain) => (
+            <span
+              key={domain}
+              className="rounded-full border px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider"
+              style={{
+                borderColor: `${accent}30`,
+                background: `${accent}12`,
+                color: accent,
+                fontFamily: "var(--font-mono)",
+              }}
+            >
+              {domain}
+            </span>
+          ))
+        ) : (
+          <span
+            className="rounded-full border px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider"
+            style={{
+              borderColor: "#10d99030",
+              background: "#10d99012",
+              color: "#10d990",
+              fontFamily: "var(--font-mono)",
+            }}
+          >
+            Allow All Domains
+          </span>
+        )}
+      </div>
+    </div>
+  );
+};
 
 /* ── Toast ─────────────────────────────────────────── */
 const Toast = ({ toast }) => {
@@ -64,7 +163,7 @@ const ApiKeyDisplay = ({ apiKey, projectId, projectName, onClose }) => {
 
 VITE_PULSEIQ_API_KEY=${apiKey}
 VITE_PULSEIQ_PROJECT_ID=${projectId}
-VITE_PULSEIQ_ENDPOINT=${BASE_URL}/api/ingest
+VITE_PULSEIQ_ENDPOINT=${BASE_URL}/api/ingest/event
 `;
     const blob = new Blob([content], { type: "text/plain" });
     const url  = URL.createObjectURL(blob);
@@ -107,7 +206,7 @@ VITE_PULSEIQ_ENDPOINT=${BASE_URL}/api/ingest
 const PULSEIQ = {
   apiKey:    "${apiKey}",
   projectId: "${projectId}",
-  endpoint:  "${BASE_URL}/api/ingest",
+  endpoint:  "${BASE_URL}/api/ingest/event",
 
   // Get or create anonymous ID
   getAnonId() {
@@ -171,7 +270,7 @@ PULSEIQ.identify("user_123"); // after login
 const CONFIG = {
   apiKey:    import.meta.env.VITE_PULSEIQ_API_KEY    || "${apiKey}",
   projectId: import.meta.env.VITE_PULSEIQ_PROJECT_ID || "${projectId}",
-  endpoint:  import.meta.env.VITE_PULSEIQ_ENDPOINT   || "${BASE_URL}/api/ingest",
+  endpoint:  import.meta.env.VITE_PULSEIQ_ENDPOINT   || "${BASE_URL}/api/ingest/event",
 };
 
 function getAnonId() {
@@ -288,7 +387,7 @@ export function identify(userId) {
             <div className="grid grid-cols-1 gap-2 mt-4 pt-4 border-t border-[#1a2a4a]">
               {[
                 { label: "Project ID",   value: projectId },
-                { label: "Endpoint",     value: `${BASE_URL}/api/ingest` },
+                { label: "Endpoint",     value: `${BASE_URL}/api/ingest/event` },
               ].map(({ label, value }) => (
                 <div key={label} className="flex items-center justify-between gap-3 p-2.5 rounded-xl bg-[#060d18] border border-[#1a2a4a]">
                   <div className="min-w-0 flex-1">
@@ -395,10 +494,14 @@ const CreateProjectModal = ({ workspaces, onClose, onCreate }) => {
 
   const handleCreate = async () => {
     if (!form.workspaceId || !form.name.trim()) { setErr("Workspace and project name required."); return; }
+    const { normalized, invalid } = validateDomainsInput(form.domains);
+    if (invalid.length) {
+      setErr(`Invalid domain entries: ${invalid.join(", ")}`);
+      return;
+    }
     setSaving(true);
     try {
-      const domains = form.domains ? form.domains.split(",").map(d => d.trim()).filter(Boolean) : [];
-      await onCreate(form.workspaceId, form.name.trim(), domains);
+      await onCreate(form.workspaceId, form.name.trim(), normalized);
       onClose();
     } catch (e) { setErr(e.message || "Failed to create."); }
     finally { setSaving(false); }
@@ -438,8 +541,9 @@ const CreateProjectModal = ({ workspaces, onClose, onCreate }) => {
                 Allowed Domains <span className="font-normal text-[#1a3a6b]">(optional, comma separated)</span>
               </label>
               <input className="w-full bg-[#04080f] border border-[#1a2a4a] rounded-xl px-4 py-3 text-[#e8f4ff] placeholder:text-[#1a3a6b] focus:outline-none focus:border-[#00e5ff44] text-sm"
-                style={{ fontFamily: "var(--font-mono)" }} placeholder="example.com, app.example.com"
-                value={form.domains} onChange={e => setForm(f => ({ ...f, domains: e.target.value }))} />
+                style={{ fontFamily: "var(--font-mono)" }} placeholder="app.example.com, *.client.com"
+                value={form.domains} onChange={e => { setForm(f => ({ ...f, domains: e.target.value })); setErr(""); }} />
+              <DomainHelper value={form.domains} accent="#00e5ff" />
             </div>
           </div>
           <div className="flex gap-3 mt-5">
@@ -465,10 +569,14 @@ const EditProjectModal = ({ project, onClose, onSave }) => {
 
   const handleSave = async () => {
     if (!name.trim()) { setErr("Project name required."); return; }
+    const { normalized, invalid } = validateDomainsInput(domains);
+    if (invalid.length) {
+      setErr(`Invalid domain entries: ${invalid.join(", ")}`);
+      return;
+    }
     setSaving(true);
     try {
-      const allowedDomains = domains ? domains.split(",").map(d => d.trim()).filter(Boolean) : [];
-      await onSave(project._id, { name: name.trim(), allowedDomains });
+      await onSave(project._id, { name: name.trim(), allowedDomains: normalized });
       onClose();
     } catch (e) { setErr(e.message || "Failed to update."); }
     finally { setSaving(false); }
@@ -497,11 +605,12 @@ const EditProjectModal = ({ project, onClose, onSave }) => {
             </div>
             <div>
               <label className="block text-[10px] text-[#3d6080] uppercase tracking-widest mb-2" style={{ fontFamily: "var(--font-mono)" }}>
-                Allowed Domains <span className="font-normal text-[#1a3a6b]">(comma separated)</span>
+                Allowed Domains <span className="font-normal text-[#1a3a6b]">(optional, comma separated)</span>
               </label>
               <input className="w-full bg-[#04080f] border border-[#1a2a4a] rounded-xl px-4 py-3 text-[#e8f4ff] placeholder:text-[#1a3a6b] focus:outline-none focus:border-[#a855f744] text-sm"
-                style={{ fontFamily: "var(--font-mono)" }} placeholder="example.com, app.example.com"
-                value={domains} onChange={e => setDomains(e.target.value)} />
+                style={{ fontFamily: "var(--font-mono)" }} placeholder="app.example.com, *.client.com"
+                value={domains} onChange={e => { setDomains(e.target.value); setErr(""); }} />
+              <DomainHelper value={domains} accent="#a855f7" />
             </div>
           </div>
           <div className="flex gap-3 mt-5">
@@ -565,7 +674,7 @@ identify(user.id); // after login`;
               {/* Project credentials */}
               {[
                 { label: "Project ID", value: project._id },
-                { label: "Endpoint",   value: `${BASE_URL}/api/ingest` },
+                { label: "Endpoint",   value: `${BASE_URL}/api/ingest/event` },
               ].map(({ label, value }) => (
                 <div key={label} className="flex items-center justify-between p-2.5 bg-[#04080f] rounded-xl border border-[#1a2a4a]">
                   <div className="min-w-0 flex-1">
@@ -598,7 +707,7 @@ identify(user.id); // after login`;
 
 /* ── Main OrgProjects ───────────────────────────────── */
 const OrgProjects = () => {
-  const { getMyWorkspaces, getProjects, createProject, deleteProject, updateProject, verifySdk, loading } = useOrgApi();
+  const { getMyWorkspaces, getProjects, createProject, deleteProject, updateProject, generateDemoData, verifySdk, loading } = useOrgApi();
   const { user } = useAuth();
   const [projects, setProjects]       = useState([]);
   const [workspaces, setWorkspaces]   = useState([]);
@@ -608,6 +717,7 @@ const OrgProjects = () => {
   const [sdkDrawer, setSdkDrawer]     = useState(null); // project object
   const [apiKeyData, setApiKeyData]   = useState(null); // { apiKey, projectId, projectName }
   const [toast, setToast]             = useState(null);
+  const [demoLoadingId, setDemoLoadingId] = useState(null);
 
   const isVerified = user?.verificationStatus === "VERIFIED";
   const showToast  = (type, msg) => { setToast({ type, msg }); setTimeout(() => setToast(null), 3000); };
@@ -622,6 +732,14 @@ const OrgProjects = () => {
 
   useEffect(() => { load(); }, [load]);
 
+  useEffect(() => {
+    const timer = setInterval(() => {
+      load();
+    }, 60000);
+
+    return () => clearInterval(timer);
+  }, [load]);
+
   const handleCreate = async (workspaceId, name, domains) => {
     const res = await createProject(workspaceId, name, domains);
     if (res?.data?.apiKey) {
@@ -631,9 +749,9 @@ const OrgProjects = () => {
     load();
   };
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (id, confirmation) => {
     try {
-      await deleteProject(id);
+      await deleteProject(id, confirmation);
       showToast("success", "Project deleted.");
       setDeleteModal(null);
       load();
@@ -647,6 +765,19 @@ const OrgProjects = () => {
       setEditModal(null);
       load();
     } catch (e) { showToast("error", e.message || "Update failed."); }
+  };
+
+  const handleGenerateDemoData = async (project) => {
+    setDemoLoadingId(project._id);
+    try {
+      const res = await generateDemoData(project._id, 21);
+      showToast("success", res?.message || "Live data generated.");
+      await load();
+    } catch (e) {
+      showToast("error", e.message || "Demo data generation failed.");
+    } finally {
+      setDemoLoadingId(null);
+    }
   };
 
   return (
@@ -725,6 +856,42 @@ const OrgProjects = () => {
                     </span>
                   </div>
 
+                  <div className="flex items-center justify-between gap-3 p-2.5 rounded-xl bg-[#04080f] border border-[#1a2a4a] mb-3">
+                    <div>
+                      <p className="text-[9px] text-[#3d6080] uppercase tracking-widest" style={{ fontFamily: "var(--font-mono)" }}>
+                        Detected Category
+                      </p>
+                      <p className="text-[11px] text-[#8ab4d4]" style={{ fontFamily: "var(--font-mono)" }}>
+                        {proj.categoryLabel || "General Web App"}
+                      </p>
+                    </div>
+                    <span className="text-[9px] px-2 py-1 rounded-full border border-[#00e5ff20] bg-[#00e5ff08] text-[#00e5ff]" style={{ fontFamily: "var(--font-mono)" }}>
+                      {proj.categoryConfidence || 0}% confidence
+                    </span>
+                  </div>
+
+                  {typeof proj.recentHealthScore === "number" && (
+                    <div className="flex items-center justify-between gap-3 p-2.5 rounded-xl bg-[#04080f] border border-[#1a2a4a] mb-3">
+                      <div>
+                        <p className="text-[9px] text-[#3d6080] uppercase tracking-widest" style={{ fontFamily: "var(--font-mono)" }}>
+                          Health Score
+                        </p>
+                        <p className="text-[10px] text-[#8ab4d4]" style={{ fontFamily: "var(--font-mono)" }}>
+                          {proj.recentHealthLabel || "Live pulse"}
+                        </p>
+                      </div>
+                      <div className="px-3 py-1 rounded-xl border text-[11px] font-black"
+                        style={{
+                          color: proj.recentHealthScore >= 70 ? "#10d990" : proj.recentHealthScore >= 40 ? "#f59e0b" : "#f43f8e",
+                          borderColor: proj.recentHealthScore >= 70 ? "#10d99030" : proj.recentHealthScore >= 40 ? "#f59e0b30" : "#f43f8e30",
+                          background: proj.recentHealthScore >= 70 ? "#10d99010" : proj.recentHealthScore >= 40 ? "#f59e0b10" : "#f43f8e10",
+                          fontFamily: "var(--font-display)"
+                        }}>
+                        {proj.recentHealthScore}/100
+                      </div>
+                    </div>
+                  )}
+
                   {/* Project ID */}
                   <div className="flex items-center gap-2 p-2.5 rounded-xl bg-[#04080f] border border-[#1a2a4a] mb-3">
                     <FolderKanban className="w-3 h-3 text-[#3d6080] flex-shrink-0" />
@@ -739,6 +906,14 @@ const OrgProjects = () => {
                         <span key={d} className="text-[9px] px-2 py-0.5 rounded-full border border-[#00e5ff20] bg-[#00e5ff08] text-[#00e5ff]"
                           style={{ fontFamily: "var(--font-mono)" }}>{d}</span>
                       ))}
+                    </div>
+                  )}
+
+                  {proj.recentHealthSummary && (
+                    <div className="mb-3 p-2.5 rounded-xl border border-[#1a2a4a] bg-[#07111d]">
+                      <p className="text-[10px] text-[#8ab4d4] leading-relaxed" style={{ fontFamily: "var(--font-mono)" }}>
+                        {proj.recentHealthSummary}
+                      </p>
                     </div>
                   )}
 
@@ -757,6 +932,15 @@ const OrgProjects = () => {
                       <Trash2 className="w-3 h-3" /> Delete
                     </motion.button>
                   </div>
+
+                  <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                    onClick={() => handleGenerateDemoData(proj)}
+                    disabled={demoLoadingId === proj._id}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-[#00e5ff30] text-[#00e5ff] hover:bg-[#00e5ff10] transition-all text-[10px] uppercase tracking-widest font-bold disabled:opacity-60"
+                    style={{ fontFamily: "var(--font-mono)" }}>
+                    <DatabaseZap className="w-3.5 h-3.5" />
+                    {demoLoadingId === proj._id ? "Generating Live Data..." : "Generate Live Demo Data"}
+                  </motion.button>
 
                   {/* SDK Setup button */}
                   <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
@@ -797,27 +981,14 @@ const OrgProjects = () => {
           />
         )}
         {deleteModal && (
-          <motion.div className="fixed inset-0 z-[9999] flex items-center justify-center px-4"
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={() => setDeleteModal(null)} />
-            <motion.div className="relative w-full max-w-sm rounded-2xl overflow-hidden"
-              initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }}
-              style={{ background: "linear-gradient(135deg,#0d1117,#161b22)", border: "1px solid #f43f8e22", boxShadow: "0 0 60px #00000099" }}>
-              <div className="h-[2px] bg-gradient-to-r from-[#f43f8e] to-transparent" />
-              <div className="p-6 text-center">
-                <div className="w-12 h-12 rounded-2xl bg-[#f43f8e0a] border border-[#f43f8e30] flex items-center justify-center mx-auto mb-4">
-                  <Trash2 className="w-5 h-5 text-[#f43f8e]" />
-                </div>
-                <h3 className="text-sm font-black text-[#e8f4ff] mb-2 uppercase" style={{ fontFamily: "var(--font-display)" }}>Delete Project</h3>
-                <p className="text-xs text-[#3d6080] mb-6" style={{ fontFamily: "var(--font-mono)" }}>Delete "{deleteModal.name}"? All analytics data will be permanently lost.</p>
-                <div className="flex gap-3">
-                  <button onClick={() => setDeleteModal(null)} className="flex-1 py-2.5 rounded-xl border border-[#1a2a4a] text-[#8ab4d4] text-xs uppercase tracking-widest" style={{ fontFamily: "var(--font-mono)" }}>Cancel</button>
-                  <motion.button whileTap={{ scale: 0.98 }} onClick={() => handleDelete(deleteModal._id)}
-                    className="flex-1 py-2.5 rounded-xl bg-[#f43f8e] text-white font-bold text-xs uppercase tracking-widest" style={{ fontFamily: "var(--font-mono)" }}>Delete</motion.button>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
+          <TypedDeleteModal
+            title="Delete Project"
+            itemName={deleteModal.name}
+            description={`Permanently delete "${deleteModal.name}"? All analytics data tied to this project will be lost.`}
+            deleting={loading}
+            onCancel={() => setDeleteModal(null)}
+            onConfirm={(confirmation) => handleDelete(deleteModal._id, confirmation)}
+          />
         )}
       </AnimatePresence>
     </OrgLayout>

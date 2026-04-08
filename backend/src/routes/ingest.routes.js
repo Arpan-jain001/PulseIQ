@@ -1,116 +1,110 @@
 import express from "express";
-import Project from "../models/Project.js";
 import Event from "../models/Event.js";
-import { hashApiKey } from "../utils/generateApiKey.js";
+import Project from "../models/Project.js";
+import { inferProjectCategory } from "../services/projectCategory.service.js";
 import { createSession } from "../services/session.service.js";
+import { extractRequestHosts, isAllowedHost } from "../utils/domainPolicy.js";
+import { hashApiKey } from "../utils/generateApiKey.js";
 
 const router = express.Router();
-
-/* ===== 🔐 RATE LIMIT (per API key) ===== */
 const rateMap = new Map();
+const RATE_WINDOW_MS = 60 * 1000;
+const RATE_LIMIT = Number(process.env.INGEST_RATE_LIMIT_PER_MINUTE || 100);
 
 function checkRateLimit(apiKey) {
   const now = Date.now();
-  const windowTime = 60 * 1000; // 1 min
-  const limit = 100; // max 100 req/min
+  const staleBefore = now - RATE_WINDOW_MS * 2;
+
+  for (const [key, times] of rateMap.entries()) {
+    const fresh = times.filter((time) => time >= staleBefore);
+    if (fresh.length) rateMap.set(key, fresh);
+    else rateMap.delete(key);
+  }
 
   if (!rateMap.has(apiKey)) {
     rateMap.set(apiKey, []);
   }
 
-  const timestamps = rateMap.get(apiKey).filter(t => now - t < windowTime);
-
-  if (timestamps.length >= limit) return false;
+  const timestamps = rateMap.get(apiKey).filter((time) => now - time < RATE_WINDOW_MS);
+  if (timestamps.length >= RATE_LIMIT) return false;
 
   timestamps.push(now);
   rateMap.set(apiKey, timestamps);
   return true;
 }
 
-/* ===== 🚀 INGEST EVENT ===== */
 router.post("/event", async (req, res) => {
   try {
     const apiKey = req.headers["x-api-key"];
 
-    /* ===== 🔐 API KEY CHECK ===== */
     if (!apiKey) {
-      return res.status(401).json({
-        success: false,
-        message: "Missing API key",
-      });
+      return res.status(401).json({ success: false, message: "Missing API key" });
     }
 
-    /* ===== 🚫 RATE LIMIT CHECK ===== */
     if (!checkRateLimit(apiKey)) {
-      return res.status(429).json({
-        success: false,
-        message: "Too many requests",
-      });
+      return res.status(429).json({ success: false, message: "Too many requests" });
     }
 
     const apiKeyHash = hashApiKey(apiKey);
-
-    const project = await Project.findOne({
-      apiKeyHash,
-      status: "ACTIVE",
-    });
+    const project = await Project.findOne({ apiKeyHash, status: "ACTIVE" });
 
     if (!project) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid API key",
-      });
+      return res.status(401).json({ success: false, message: "Invalid API key" });
     }
 
-    /* ===== 📦 BODY DATA ===== */
-    const { eventName, anonymousId, userId, properties, ts } = req.body;
+    const { eventName, anonymousId, userId, properties, ts, sessionId } = req.body;
 
-    /* ===== 🧠 VALIDATION ===== */
     if (!eventName || typeof eventName !== "string" || eventName.length > 50) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid eventName",
-      });
+      return res.status(400).json({ success: false, message: "Invalid eventName" });
     }
 
     if (!anonymousId && !userId) {
       return res.status(400).json({
         success: false,
-        message: "User पहचान missing",
+        message: "anonymousId or userId is required",
       });
     }
 
     if (properties && typeof properties !== "object") {
-      return res.status(400).json({
+      return res.status(400).json({ success: false, message: "Invalid properties" });
+    }
+
+    const requestHosts = extractRequestHosts(req, properties || {});
+    const isBrowserRequest = Boolean(req.headers.origin || req.headers.referer);
+
+    if (
+      isBrowserRequest &&
+      Array.isArray(project.allowedDomains) &&
+      project.allowedDomains.length > 0 &&
+      !isAllowedHost(requestHosts, project.allowedDomains)
+    ) {
+      return res.status(403).json({
         success: false,
-        message: "Invalid properties",
+        message: "Origin domain is not allowed for this project",
       });
     }
 
-    /* ===== ⚠️ SUSPICIOUS PAYLOAD LOG ===== */
     if (properties && Object.keys(properties).length > 20) {
-      console.warn("⚠️ Suspicious payload:", properties);
+      console.warn("Suspicious ingest payload:", properties);
     }
 
-    /* ===== 🌐 CAPTURE ORIGIN (for analytics, NOT blocking) ===== */
     const origin = req.headers.origin || "";
 
-    /* ===== 📝 CREATE EVENT ===== */
     const event = await Event.create({
       projectId: project._id,
       eventName,
+      sessionId: sessionId || "",
       anonymousId: anonymousId || "",
       userId: userId || "",
       properties: {
         ...properties,
-        origin, // store for analytics
+        origin,
       },
       ts: ts ? new Date(ts) : new Date(),
       ip: req.ip || "",
       ua: req.headers["user-agent"] || "",
     });
 
-    /* ===== 📊 SESSION TRACKING ===== */
     if (!req.body.sessionId) {
       await createSession({
         userId: userId || anonymousId,
@@ -119,27 +113,31 @@ router.post("/event", async (req, res) => {
       });
     }
 
-    /* ===== ✅ AUTO SDK VERIFY ===== */
+    const category = inferProjectCategory({
+      project,
+      events: [{ eventName, properties: event.properties }],
+    });
+
+    const projectUpdates = {
+      categoryKey: category.key,
+      categoryLabel: category.label,
+      categoryConfidence: Math.max(project.categoryConfidence || 0, category.confidence || 0),
+    };
+
     if (!project.sdkVerified) {
-      await Project.findByIdAndUpdate(project._id, {
-        sdkVerified: true,
-        sdkVerifiedAt: new Date(),
-      });
+      projectUpdates.sdkVerified = true;
+      projectUpdates.sdkVerifiedAt = new Date();
     }
 
-    /* ===== 🎯 SUCCESS ===== */
+    await Project.findByIdAndUpdate(project._id, projectUpdates);
+
     res.status(201).json({
       success: true,
       data: { id: event._id },
     });
-
   } catch (error) {
-    console.error("❌ Ingest error:", error.message);
-
-    res.status(500).json({
-      success: false,
-      message: "Server error",
-    });
+    console.error("Ingest error:", error.message);
+    res.status(500).json({ success: false, message: "Server error" });
   }
 });
 

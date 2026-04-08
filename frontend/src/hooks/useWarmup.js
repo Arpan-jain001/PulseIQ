@@ -4,16 +4,16 @@ const BASE_API_URL = import.meta.env.VITE_BACKEND_API_URL;
 
 export const useWarmup = () => {
   useEffect(() => {
-    // Small delay — DOM load hone ke baad ping karo
+    if (!BASE_API_URL) return undefined;
+
     const timer = setTimeout(() => {
       fetch(`${BASE_API_URL}/health`, {
         method: "GET",
-        // No credentials, no headers — lightest possible request
       }).catch(() => {
-        // Silently ignore — even if it fails, no error shown
+        // Warmup failure should not interrupt the UI.
       });
-    }, 1000); // 1 second baad ping
+    }, 1000);
 
     return () => clearTimeout(timer);
-  }, []); // Only once on mount
+  }, []);
 };

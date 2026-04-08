@@ -1,8 +1,8 @@
-// src/user/hooks/useUserApi.js
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import axios from "axios";
 
 const BASE = import.meta.env.VITE_BACKEND_API_URL;
+
 const headers = () => ({
   Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
   "Content-Type": "application/json",
@@ -10,56 +10,96 @@ const headers = () => ({
 
 export const useUserApi = () => {
   const [loading, setLoading] = useState(false);
-  const [error, setError]     = useState(null);
+  const [error, setError] = useState(null);
 
   const req = useCallback(async (method, url, data = null) => {
-    setLoading(true); setError(null);
+    setLoading(true);
+    setError(null);
+
     try {
       const res = await axios({ method, url: `${BASE}${url}`, data, headers: headers() });
       return res.data;
     } catch (e) {
-      const msg = e.response?.data?.message || "Request failed";
-      setError(msg); throw new Error(msg);
-    } finally { setLoading(false); }
+      const message = e.response?.data?.message || "Request failed";
+      setError(message);
+      throw new Error(message);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  // Profile
-  const getProfile    = ()     => req("GET", "/api/users/me");
-  const updateProfile = (data) => req("PUT", "/api/users/me", data);
+  const methods = useMemo(() => {
+    const getProfile = () => req("GET", "/api/users/me");
+    const updateProfile = (data) => req("PUT", "/api/users/me", data);
 
-  // ✅ Workspaces — USER bhi member ho sakta hai
-  // GET /api/workspaces/mine — sab memberships return karta hai (OWNER + invited)
-  const getMyWorkspaces = () => req("GET", "/api/workspaces/mine");
+    const getMyWorkspaces = () => req("GET", "/api/workspaces/mine");
+    const getWorkspaceMembers = (workspaceId) => req("GET", `/api/workspaces/${workspaceId}/members`);
 
-  // Members of a workspace (role check ke liye)
-  const getWorkspaceMembers = (wsId) => req("GET", `/api/workspaces/${wsId}/members`);
+    const getAnalyticsOverview = (projectId, from, to) => {
+      const params = new URLSearchParams({ projectId, ...(from && { from }), ...(to && { to }) });
+      return req("GET", `/api/analytics/overview?${params}`);
+    };
 
-  // ✅ Analytics — MEMBER/ADMIN role wale dekh sakte hain
-  const getAnalyticsOverview = (projectId, from, to) => {
-    const p = new URLSearchParams({ projectId, ...(from && { from }), ...(to && { to }) });
-    return req("GET", `/api/analytics/overview?${p}`);
-  };
-  const getDau = (projectId, from, to) => {
-    const p = new URLSearchParams({ projectId, ...(from && { from }), ...(to && { to }) });
-    return req("GET", `/api/analytics/dau?${p}`);
-  };
+    const getDau = (projectId, from, to) => {
+      const params = new URLSearchParams({ projectId, ...(from && { from }), ...(to && { to }) });
+      return req("GET", `/api/analytics/dau?${params}`);
+    };
 
-  // ✅ Projects — workspace ke projects
-  const getProjects = () => req("GET", "/api/projects");
+    const getRetention = (projectId, from, to) => {
+      const params = new URLSearchParams({ projectId, ...(from && { from }), ...(to && { to }) });
+      return req("GET", `/api/analytics/retention?${params}`);
+    };
 
-  // Notifications
-  const getNotifications = (workspaceId) => {
-    const p = workspaceId ? `?workspaceId=${workspaceId}` : "";
-    return req("GET", `/api/notifications${p}`);
-  };
-  const markRead = (id) => req("PATCH", `/api/notifications/${id}/read`);
+    const getPageAnalytics = (projectId, from, to) => {
+      const params = new URLSearchParams({ projectId, ...(from && { from }), ...(to && { to }) });
+      return req("GET", `/api/analytics/page-analytics?${params}`);
+    };
+
+    const getHeatmap = (projectId, from, to, page = "") => {
+      const params = new URLSearchParams({ projectId, ...(from && { from }), ...(to && { to }), ...(page && { page }) });
+      return req("GET", `/api/analytics/heatmap?${params}`);
+    };
+
+    const getSessions = (projectId, from, to) => {
+      const params = new URLSearchParams({ projectId, ...(from && { from }), ...(to && { to }) });
+      return req("GET", `/api/analytics/sessions?${params}`);
+    };
+
+    const getExamAnalytics = (projectId, from, to) => {
+      const params = new URLSearchParams({ projectId, ...(from && { from }), ...(to && { to }) });
+      return req("GET", `/api/analytics/exam?${params}`);
+    };
+
+    const getProjects = () => req("GET", "/api/projects");
+
+    const getNotifications = (workspaceId) => {
+      const suffix = workspaceId ? `?workspaceId=${workspaceId}` : "";
+      return req("GET", `/api/notifications${suffix}`);
+    };
+
+    const markRead = (id) => req("PATCH", `/api/notifications/${id}/read`);
+
+    return {
+      getProfile,
+      updateProfile,
+      getMyWorkspaces,
+      getWorkspaceMembers,
+      getAnalyticsOverview,
+      getDau,
+      getRetention,
+      getPageAnalytics,
+      getHeatmap,
+      getSessions,
+      getExamAnalytics,
+      getProjects,
+      getNotifications,
+      markRead,
+    };
+  }, [req]);
 
   return {
-    loading, error,
-    getProfile, updateProfile,
-    getMyWorkspaces, getWorkspaceMembers,
-    getAnalyticsOverview, getDau,
-    getProjects,
-    getNotifications, markRead,
+    loading,
+    error,
+    ...methods,
   };
 };

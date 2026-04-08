@@ -8,9 +8,13 @@ import {
   CheckCircle2, Clock, XCircle, Copy, Check, X
 } from "lucide-react";
 import AdminLayout from "../components/AdminLayout";
+import TypedDeleteModal from "../../components/TypedDeleteModal";
 
 const BASE = import.meta.env.VITE_BACKEND_API_URL;
-const headers = () => ({ Authorization: `Bearer ${localStorage.getItem("accessToken")}` });
+const headers = () => ({
+  Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+  "Content-Type": "application/json",
+});
 
 /* ── Copy Button ─────────────────────────────────────── */
 const CopyBtn = ({ text }) => {
@@ -316,9 +320,13 @@ const AdminWorkspaces = () => {
 
   useEffect(() => { load(); }, [load]);
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (id, confirmation) => {
     try {
-      const res = await fetch(`${BASE}/api/admin/workspaces/${id}`, { method: "DELETE", headers: headers() });
+      const res = await fetch(`${BASE}/api/admin/workspaces/${id}`, {
+        method: "DELETE",
+        headers: headers(),
+        body: JSON.stringify({ confirmation }),
+      });
       const data = await res.json();
       if (data.success) {
         showToast("success", "Workspace deleted.");
@@ -506,30 +514,14 @@ const AdminWorkspaces = () => {
       {/* Delete Confirm */}
       <AnimatePresence>
         {deleteModal && (
-          <motion.div className="fixed inset-0 z-[9999] flex items-center justify-center px-4"
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setDeleteModal(null)} />
-            <motion.div className="relative w-full max-w-sm rounded-2xl overflow-hidden"
-              initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }}
-              style={{ background: "linear-gradient(135deg,#0d1117,#161b22)", border: "1px solid #f43f8e22", boxShadow: "0 0 60px #00000099" }}>
-              <div className="h-[2px] bg-gradient-to-r from-[#f43f8e] to-transparent" />
-              <div className="p-6 text-center">
-                <div className="w-12 h-12 rounded-2xl bg-[#f43f8e0a] border border-[#f43f8e30] flex items-center justify-center mx-auto mb-4">
-                  <Trash2 className="w-5 h-5 text-[#f43f8e]" />
-                </div>
-                <h3 className="text-sm font-black text-[#e8f4ff] mb-2 uppercase" style={{ fontFamily: "var(--font-display)" }}>Delete Workspace</h3>
-                <p className="text-xs text-[#3d6080] mb-5" style={{ fontFamily: "var(--font-mono)" }}>
-                  Delete <span className="text-[#f43f8e]">"{deleteModal.name}"</span>?<br/>
-                  All projects and members will be permanently removed.
-                </p>
-                <div className="flex gap-3">
-                  <button onClick={() => setDeleteModal(null)} className="flex-1 py-2.5 rounded-xl border border-[#1a2a4a] text-[#8ab4d4] text-xs uppercase tracking-widest" style={{ fontFamily: "var(--font-mono)" }}>Cancel</button>
-                  <motion.button whileTap={{ scale: 0.98 }} onClick={() => handleDelete(deleteModal._id)}
-                    className="flex-1 py-2.5 rounded-xl bg-[#f43f8e] text-white font-bold text-xs uppercase tracking-widest" style={{ fontFamily: "var(--font-mono)" }}>Delete</motion.button>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
+          <TypedDeleteModal
+            title="Delete Workspace"
+            itemName={deleteModal.name}
+            description={`Permanently delete "${deleteModal.name}"? All projects, analytics data, members, and workspace notifications will be removed.`}
+            deleting={loading}
+            onCancel={() => setDeleteModal(null)}
+            onConfirm={(confirmation) => handleDelete(deleteModal._id, confirmation)}
+          />
         )}
       </AnimatePresence>
     </AdminLayout>
