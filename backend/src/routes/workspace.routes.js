@@ -8,6 +8,7 @@ import User from "../models/User.js";
 import { deleteWorkspaceCascade, isDeleteConfirmationValid } from "../services/deletion.service.js";
 import { sendEmail } from "../utils/sendEmail.js";
 import { getWorkspaceInviteTemplate } from "../utils/emailTemplate.js";
+import { getFrontendUrl } from "../utils/frontendUrl.js";
 
 const router = express.Router();
 
@@ -45,7 +46,7 @@ router.post("/:id/members", protect, allowRoles("SUPER_ADMIN", "ORGANIZER"), asy
 
     const inviter = await User.findById(req.user._id).select("name email");
     const invitationToken = crypto.randomBytes(24).toString("hex");
-    const frontendUrl = (process.env.FRONTEND_URL || process.env.CLIENT_URL || "http://localhost:5173").replace(/\/$/, "");
+    const frontendUrl = getFrontendUrl();
     const acceptUrl = `${frontendUrl}/login?invite=${invitationToken}`;
     const signupUrl = `${frontendUrl}/signup?invite=${invitationToken}`;
 

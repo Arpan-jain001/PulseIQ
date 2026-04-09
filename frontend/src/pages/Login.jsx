@@ -1,6 +1,6 @@
 import { useEffect, useRef, useCallback, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, ArrowRight, Loader2, ShieldCheck, Zap, Sparkles } from "lucide-react";
 import axios from "axios";
 import Navbar from "../components/Navbar";
@@ -9,6 +9,11 @@ import { useAuth } from "../hooks/useAuth.js";
 
 const BASE_API_URL = import.meta.env.VITE_BACKEND_API_URL;
 const LOGIN_TIMEOUT_MS = 30_000;
+const getRoleRedirect = (role) => {
+  if (role === "SUPER_ADMIN") return "/admin-dashboard";
+  if (role === "ORGANIZER") return "/organizer-dashboard";
+  return "/dashboard";
+};
 
 /* ── Toast ──────────────────────────────────────────── */
 const SmsToast = ({ type = "info", message, onClose }) => {
@@ -137,16 +142,18 @@ const Login = () => {
   const [rememberMe, setRememberMe] = useState(true);
   const [showSuccess, setShowSuccess] = useState(false);
   const [focusedField, setFocusedField] = useState(null);
-  const [inviteToken] = useState(() => {
-    const tokenFromQuery = new URLSearchParams(window.location.search).get("invite");
-    return tokenFromQuery || localStorage.getItem("pulseiq_pending_invite") || "";
-  });
 
+  const location = useLocation();
   const navigate = useNavigate();
   const { user, authenticate } = useAuth();
   const abortControllerRef = useRef(null);
   const toastTimerRef = useRef(null);
   const isMountedRef = useRef(true);
+  const inviteAcceptInFlightRef = useRef(false);
+  const inviteToken = useMemo(() => {
+    const tokenFromQuery = new URLSearchParams(location.search).get("invite");
+    return tokenFromQuery || localStorage.getItem("pulseiq_pending_invite") || "";
+  }, [location.search]);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -158,11 +165,11 @@ const Login = () => {
   }, []);
 
   useEffect(() => {
-    const tokenFromQuery = new URLSearchParams(window.location.search).get("invite");
+    const tokenFromQuery = new URLSearchParams(location.search).get("invite");
     if (tokenFromQuery) {
       localStorage.setItem("pulseiq_pending_invite", tokenFromQuery);
     }
-  }, []);
+  }, [location.search]);
 
   useEffect(() => {
     const handleVisibilityChange = () => {
@@ -191,10 +198,9 @@ const Login = () => {
 
   useEffect(() => {
     if (!user) return;
-    if (user.role === "SUPER_ADMIN") navigate("/admin-dashboard");
-    else if (user.role === "ORGANIZER") navigate("/organizer-dashboard");
-    else navigate("/dashboard");
-  }, [user, navigate]);
+    if (inviteToken) return;
+    navigate(getRoleRedirect(user.role), { replace: true });
+  }, [user, inviteToken, navigate]);
 
   const fireToast = useCallback((type, message) => {
     if (!isMountedRef.current) return;
@@ -211,21 +217,32 @@ const Login = () => {
     fireToast("error", "⏱ Request timed out. Check your connection.");
   }, [resetLoading, fireToast]);
 
+  const acceptPendingInvitation = useCallback(async () => {
+    if (!inviteToken) return;
+
+    try {
+      await axios.post(
+        `${BASE_API_URL}/api/workspaces/invitations/accept`,
+        { token: inviteToken },
+        { headers: { Authorization: `Bearer ${localStorage.getItem("accessToken")}` } }
+      );
+      localStorage.removeItem("pulseiq_pending_invite");
+      fireToast("success", "Invitation accepted successfully.");
+    } catch (err) {
+      const status = err.response?.status;
+      const msg = err.response?.data?.message || "Invitation could not be accepted automatically.";
+      if (status && status < 500) {
+        localStorage.removeItem("pulseiq_pending_invite");
+      }
+      fireToast("info", msg);
+    }
+  }, [inviteToken, fireToast]);
+
   const successFlow = useCallback(async (userData) => {
     if (!isMountedRef.current) return;
     if (inviteToken) {
-      try {
-        await axios.post(
-          `${BASE_API_URL}/api/workspaces/invitations/accept`,
-          { token: inviteToken },
-          { headers: { Authorization: `Bearer ${localStorage.getItem("accessToken")}` } }
-        );
-        localStorage.removeItem("pulseiq_pending_invite");
-        fireToast("success", "Invitation accepted successfully.");
-      } catch (err) {
-        const msg = err.response?.data?.message || "Invitation could not be accepted automatically.";
-        fireToast("info", msg);
-      }
+      inviteAcceptInFlightRef.current = true;
+      await acceptPendingInvitation();
     }
     setIsLoading(false);
     setShowSuccess(true);
@@ -233,10 +250,22 @@ const Login = () => {
     await new Promise((r) => setTimeout(r, 500));
     if (!isMountedRef.current) return;
     setShowSuccess(false);
-    if (userData.role === "SUPER_ADMIN") navigate("/admin-dashboard");
-    else if (userData.role === "ORGANIZER") navigate("/organizer-dashboard");
-    else navigate("/dashboard");
-  }, [inviteToken, navigate, fireToast]);
+    navigate(getRoleRedirect(userData.role), { replace: true });
+  }, [inviteToken, navigate, fireToast, acceptPendingInvitation]);
+
+  useEffect(() => {
+    if (!user || !inviteToken || inviteAcceptInFlightRef.current) return;
+
+    inviteAcceptInFlightRef.current = true;
+    setIsLoading(true);
+    setLoadingText("Accepting your invitation...");
+
+    acceptPendingInvitation().finally(() => {
+      if (!isMountedRef.current) return;
+      setIsLoading(false);
+      navigate(getRoleRedirect(user.role), { replace: true });
+    });
+  }, [user, inviteToken, acceptPendingInvitation, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

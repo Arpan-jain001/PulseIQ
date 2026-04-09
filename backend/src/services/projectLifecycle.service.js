@@ -3,13 +3,11 @@ import {
   getProjectCreatedTemplate,
   getProjectDeletedTemplate,
 } from "../utils/emailTemplate.js";
+import { getFrontendUrl } from "../utils/frontendUrl.js";
 import {
   createWorkspaceNotifications,
   listWorkspaceAudience,
 } from "./workspaceAudience.service.js";
-
-const getFrontendUrl = () =>
-  (process.env.FRONTEND_URL || process.env.CLIENT_URL || "http://localhost:5173").replace(/\/$/, "");
 
 const sendToAudience = async ({ recipients, subject, buildHtml }) => {
   let delivered = 0;

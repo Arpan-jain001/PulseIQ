@@ -10,6 +10,7 @@ import {
   getLoginAlertTemplate,
 } from "../utils/emailTemplate.js";
 import { UAParser } from "ua-parser-js";
+import { getFrontendUrl } from "../utils/frontendUrl.js";
 
 /* ═══════════════════════════════════════════
    TOKEN GENERATORS
@@ -47,7 +48,8 @@ export const registerUser = async ({ name, email, password, role, companyName })
     emailVerificationExpire: Date.now() + 10 * 60 * 1000, // 10 min
   });
 
-  const link = `${process.env.CLIENT_URL}/verify-email/${token}`;
+  const frontendUrl = getFrontendUrl();
+  const link = `${frontendUrl}/verify-email/${token}`;
 
   await sendEmail({
     to: email,
@@ -122,8 +124,9 @@ if (!user.lastLoginAt || Date.now() - user.lastLoginAt > 5 * 60 * 1000) {
     await user.save();
 
     // 🔥 LINKS
-    const allowLink = `${process.env.CLIENT_URL}/security/verify-login/${rawToken}?action=allow`;
-    const blockLink = `${process.env.CLIENT_URL}/security/verify-login/${rawToken}?action=block`;
+    const frontendUrl = getFrontendUrl();
+    const allowLink = `${frontendUrl}/security/verify-login/${rawToken}?action=allow`;
+    const blockLink = `${frontendUrl}/security/verify-login/${rawToken}?action=block`;
 
     await sendEmail({
       to: user.email,
@@ -266,7 +269,8 @@ export const resendVerification = async (email) => {
   user.emailVerificationExpire = Date.now() + 10 * 60 * 1000;
   await user.save();
 
-  const link = `${process.env.CLIENT_URL}/verify-email/${token}`;
+  const frontendUrl = getFrontendUrl();
+  const link = `${frontendUrl}/verify-email/${token}`;
 
   await sendEmail({
     to: email,
@@ -294,7 +298,8 @@ user.resetPasswordOTP = hashedOTP;
 user.resetPasswordExpire = Date.now() + 10 * 60 * 1000;
   await user.save();
 
-  const link = `${process.env.CLIENT_URL}/reset-password/${token}`;
+  const frontendUrl = getFrontendUrl();
+  const link = `${frontendUrl}/reset-password/${token}`;
 
   await sendEmail({
     to: user.email,

@@ -199,9 +199,10 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     if (loading || !user) return;
     if (!PUBLIC_ONLY_ROUTES.includes(location.pathname)) return;
+    if (new URLSearchParams(location.search).has("invite")) return;
 
     navigate(getRoleRedirect(user.role), { replace: true });
-  }, [loading, user, location.pathname, navigate]);
+  }, [loading, user, location.pathname, location.search, navigate]);
 
   const value = useMemo(
     () => ({
