@@ -7,7 +7,7 @@ import {
   Lock, XCircle, Info, BrainCircuit, MessageSquare,
   Send, Sparkles, ArrowUpRight, ArrowDownRight,
   Target, AlertCircle, Eye, Globe, Clock, ChevronRight,
-  BarChart2, Layers, Code2, DatabaseZap
+  BarChart2, Layers, Code2
 } from "lucide-react";
 import {
   AreaChart, Area, BarChart, Bar, LineChart, Line,
@@ -451,7 +451,7 @@ const OrgAnalytics = () => {
     getMyWorkspaces, getProjects, getAnalyticsOverview, getDau,
     getMau, getPageAnalytics, getRetention, getEventTrend, getHeatmap, getSessions, getExamAnalytics,
     getAiInsights, askAiChat, getPageAiInsights,
-    verifySdk, skipVerification, generateDemoData, loading
+    verifySdk, skipVerification, loading
   } = useOrgApi();
 
   const [workspaces, setWorkspaces]   = useState([]);
@@ -471,7 +471,6 @@ const OrgAnalytics = () => {
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [showSdkDrawer, setShowSdkDrawer] = useState(false);
   const [activeTab, setActiveTab]     = useState("overview");
-  const [demoSeedLoading, setDemoSeedLoading] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
   // AI state
@@ -589,21 +588,6 @@ const OrgAnalytics = () => {
       if (fresh) setSelectedProj({ ...fresh, skippedVerification:true });
       setRefreshKey((value) => value + 1);
     } catch {}
-  };
-
-  const handleGenerateDemoData = async () => {
-    if (!selectedProj) return;
-    setDemoSeedLoading(true);
-    try {
-      await generateDemoData(selectedProj._id, 21);
-      const list = await refreshProjects();
-      const fresh = list.find((p) => p._id === selectedProj._id);
-      if (fresh) setSelectedProj(fresh);
-      setRefreshKey((value) => value + 1);
-    } catch {}
-    finally {
-      setDemoSeedLoading(false);
-    }
   };
 
   const wsProjects = selectedWs ? projects.filter(p => (p.workspaceId?._id||p.workspaceId) === selectedWs._id) : [];
@@ -742,26 +726,6 @@ const OrgAnalytics = () => {
                   {overview?.category?.journeysLabel || "User journeys"}
                 </p>
               </div>
-            </div>
-
-            <div className="mb-5 flex items-center justify-between gap-3 rounded-xl border border-[#1a2a4a] bg-[#04080f] p-3 flex-wrap">
-              <div>
-                <p className="text-[10px] uppercase tracking-widest text-[#00e5ff]" style={{ fontFamily:"var(--font-mono)" }}>
-                  Real Data Bootstrap
-                </p>
-                <p className="text-[11px] text-[#8ab4d4]" style={{ fontFamily:"var(--font-mono)" }}>
-                  Empty dashboard? Generate a live dataset in MongoDB for this project and unlock charts instantly.
-                </p>
-              </div>
-              <button
-                onClick={handleGenerateDemoData}
-                disabled={demoSeedLoading}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl border border-[#00e5ff30] text-[#00e5ff] hover:bg-[#00e5ff10] transition-all text-[10px] uppercase tracking-widest font-bold disabled:opacity-60"
-                style={{ fontFamily:"var(--font-mono)" }}
-              >
-                <DatabaseZap className="w-3.5 h-3.5" />
-                {demoSeedLoading ? "Generating..." : "Generate Live Data"}
-              </button>
             </div>
 
             {/* Tabs */}

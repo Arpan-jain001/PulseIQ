@@ -47,7 +47,6 @@ export const useOrgApi = () => {
     const getProjects = () => req("GET", "/api/projects");
     const deleteProject = (id, confirmation) => req("DELETE", `/api/projects/${id}`, { confirmation });
     const updateProject = (id, data) => req("PATCH", `/api/projects/${id}`, data);
-    const generateDemoData = (id, days = 21) => req("POST", `/api/projects/${id}/generate-demo-data`, { days });
     const verifySdk = (id) => req("GET", `/api/projects/${id}/verify-sdk`);
     const skipVerification = (id) => req("POST", `/api/projects/${id}/skip-verification`);
 
@@ -105,7 +104,6 @@ export const useOrgApi = () => {
       getProjects,
       deleteProject,
       updateProject,
-      generateDemoData,
       verifySdk,
       skipVerification,
       getMau,
