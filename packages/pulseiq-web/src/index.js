@@ -19,6 +19,8 @@ const getStore = (type) => {
 const randomId = (prefix) => `${prefix}_${Math.random().toString(36).slice(2, 11)}`;
 
 const normalizeEndpoint = (endpoint) => endpoint.replace(/\/+$/, "");
+const getLocationKey = () =>
+  hasWindow() ? `${window.location.pathname}${window.location.search}${window.location.hash}` : "";
 
 export function createPulseIQ(config = {}) {
   const {
@@ -38,6 +40,7 @@ export function createPulseIQ(config = {}) {
   const sessionStore = getStore("session");
   const finalEndpoint = normalizeEndpoint(endpoint);
   let cleanupFns = [];
+  let lastTrackedPage = "";
 
   const getAnonymousId = () => {
     let id = localStore.getItem("_piq_anon");
@@ -106,6 +109,13 @@ export function createPulseIQ(config = {}) {
 
   const page = async (properties = {}) => track("page_view", properties);
 
+  const trackCurrentPage = async (properties = {}) => {
+    const nextPage = getLocationKey();
+    if (!nextPage || nextPage === lastTrackedPage) return false;
+    lastTrackedPage = nextPage;
+    return page(properties);
+  };
+
   const identify = async (userId, traits = {}) => {
     if (!userId) throw new Error("PulseIQ: userId is required for identify()");
     localStore.setItem("_piq_user", String(userId));
@@ -119,8 +129,43 @@ export function createPulseIQ(config = {}) {
   const attachAutoTracking = (options = {}) => {
     const clickTracking = options.click ?? autoTrackClicks;
     const scrollTracking = options.scroll ?? autoTrackScroll;
+    const pageTracking = options.pageViews ?? autoTrackPageViews;
 
     const nextCleanup = [];
+
+    if (hasWindow() && pageTracking) {
+      const onRouteChange = () => {
+        trackCurrentPage();
+      };
+
+      const wrapHistoryMethod = (method) => {
+        const original = window.history?.[method];
+        if (typeof original !== "function") return null;
+
+        const wrapped = function pulseiqHistoryWrap(...args) {
+          const result = original.apply(this, args);
+          window.setTimeout(onRouteChange, 0);
+          return result;
+        };
+
+        window.history[method] = wrapped;
+        return () => {
+          window.history[method] = original;
+        };
+      };
+
+      const restorePushState = wrapHistoryMethod("pushState");
+      const restoreReplaceState = wrapHistoryMethod("replaceState");
+
+      window.addEventListener("popstate", onRouteChange);
+      window.addEventListener("hashchange", onRouteChange);
+
+      nextCleanup.push(() => window.removeEventListener("popstate", onRouteChange));
+      nextCleanup.push(() => window.removeEventListener("hashchange", onRouteChange));
+
+      if (restorePushState) nextCleanup.push(restorePushState);
+      if (restoreReplaceState) nextCleanup.push(restoreReplaceState);
+    }
 
     if (hasWindow() && clickTracking) {
       const onClick = (event) => {
@@ -156,8 +201,10 @@ export function createPulseIQ(config = {}) {
   };
 
   const start = () => {
-    if (autoTrackPageViews) page();
-    if (autoTrackClicks || autoTrackScroll) attachAutoTracking();
+    if (autoTrackPageViews) trackCurrentPage();
+    if (autoTrackPageViews || autoTrackClicks || autoTrackScroll) {
+      attachAutoTracking({ pageViews: autoTrackPageViews });
+    }
   };
 
   const stop = () => {

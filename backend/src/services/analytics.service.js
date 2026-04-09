@@ -178,7 +178,6 @@ export const pageAnalytics = async ({ projectId, from, to }) => {
         referrers:   { $slice: ["$referrers", 5] },
     }},
     { $sort: { totalViews: -1 } },
-    { $limit: 20 },
   ]);
 
   // DAU per page (last 7 days)

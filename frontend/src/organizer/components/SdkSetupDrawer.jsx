@@ -11,15 +11,27 @@ import {
   AlertTriangle,
   RefreshCw,
   Code2,
+  FileText,
+  Sparkles,
 } from "lucide-react";
 import {
   SDK_PLATFORMS,
   getSdkGuide,
+  getSdkAiPrompt,
+  getSdkSetupDocument,
   buildIngestEndpoint,
   getDownloadFilename,
 } from "../../lib/sdkGuides";
 
 const BASE_URL = import.meta.env.VITE_BACKEND_API_URL;
+
+const escapeHtml = (value = "") =>
+  value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 
 const CopyBtn = ({ text, label = "Copy" }) => {
   const [copied, setCopied] = useState(false);
@@ -108,6 +120,19 @@ const SdkSetupDrawer = ({ project, onClose, verifySdk }) => {
     projectId: project._id,
     endpoint: BASE_URL,
   });
+  const aiPrompt = getSdkAiPrompt({
+    platform: activeTab,
+    apiKey: "YOUR_API_KEY",
+    projectId: project._id,
+    endpoint: BASE_URL,
+  });
+  const setupGuide = getSdkSetupDocument({
+    platform: activeTab,
+    apiKey: "YOUR_API_KEY",
+    projectId: project._id,
+    endpoint: BASE_URL,
+    projectName: project.name,
+  });
 
   const downloadCode = () => {
     const blob = new Blob([guide.code], { type: "text/plain" });
@@ -117,6 +142,60 @@ const SdkSetupDrawer = ({ project, onClose, verifySdk }) => {
     link.download = getDownloadFilename(guide.filename);
     link.click();
     URL.revokeObjectURL(url);
+  };
+
+  const downloadPrompt = () => {
+    const blob = new Blob([aiPrompt], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = getDownloadFilename(`pulseiq-${activeTab}-ai-prompt.txt`);
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const printGuide = () => {
+    const win = window.open("", "_blank", "noopener,noreferrer,width=960,height=760");
+    if (!win) return;
+
+    win.document.write(`<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>PulseIQ Setup Guide</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: #ffffff;
+        color: #111827;
+        margin: 32px;
+        line-height: 1.5;
+      }
+      h1 {
+        font-size: 24px;
+        margin-bottom: 8px;
+      }
+      pre {
+        white-space: pre-wrap;
+        word-break: break-word;
+        background: #f8fafc;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 16px;
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>PulseIQ Setup Guide</h1>
+    <pre>${escapeHtml(setupGuide)}</pre>
+  </body>
+</html>`);
+    win.document.close();
+    win.focus();
+    window.setTimeout(() => {
+      win.print();
+    }, 250);
   };
 
   const startVerify = async () => {
@@ -301,6 +380,44 @@ const SdkSetupDrawer = ({ project, onClose, verifySdk }) => {
             >
               <Download className="h-3.5 w-3.5" /> Download {guide.filename.split(" ")[0]}
             </motion.button>
+
+            <div className="mt-5 rounded-2xl border border-[#1a2a4a] bg-[#04080f] p-4">
+              <div className="mb-3 flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-[9px] uppercase tracking-widest text-[#a855f7]" style={{ fontFamily: "var(--font-mono)" }}>
+                    AI setup assist
+                  </p>
+                  <p className="text-[11px] text-[#8ab4d4]" style={{ fontFamily: "var(--font-mono)" }}>
+                    Share this prompt with ChatGPT, Claude, Cursor, Copilot, or any coding AI so it can place the SDK in the right files automatically.
+                  </p>
+                </div>
+                <Sparkles className="h-4 w-4 flex-shrink-0 text-[#a855f7]" />
+              </div>
+
+              <CodeBlock code={aiPrompt} filename={`pulseiq-${activeTab}-ai-prompt.txt`} />
+
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                <motion.button
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.99 }}
+                  onClick={downloadPrompt}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#00e5ff30] bg-[#00e5ff10] py-3 text-[11px] font-bold uppercase tracking-wider text-[#00e5ff]"
+                  style={{ fontFamily: "var(--font-mono)" }}
+                >
+                  <Download className="h-3.5 w-3.5" /> Download AI Prompt
+                </motion.button>
+
+                <motion.button
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.99 }}
+                  onClick={printGuide}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#10d99030] bg-[#10d99010] py-3 text-[11px] font-bold uppercase tracking-wider text-[#10d990]"
+                  style={{ fontFamily: "var(--font-mono)" }}
+                >
+                  <FileText className="h-3.5 w-3.5" /> Print PDF Guide
+                </motion.button>
+              </div>
+            </div>
           </div>
 
           <div className="mt-2 border-t border-[#1a2a4a] px-5 py-5">
