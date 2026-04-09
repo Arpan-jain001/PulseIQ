@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   FolderKanban, Plus, X, RefreshCw, Copy, Eye, EyeOff,
   Key, Trash2, Check, Pencil, ChevronDown, ChevronUp,
-  Terminal, Code2, Globe, Download, AlertTriangle, FileCode2, DatabaseZap
+  Terminal, Code2, Globe, Download, AlertTriangle, FileCode2
 } from "lucide-react";
 import OrgLayout from "../components/OrgLayout";
 import ApiKeySetupModal from "../components/ApiKeySetupModal";
@@ -707,7 +707,7 @@ identify(user.id); // after login`;
 
 /* ── Main OrgProjects ───────────────────────────────── */
 const OrgProjects = () => {
-  const { getMyWorkspaces, getProjects, createProject, deleteProject, updateProject, generateDemoData, verifySdk, loading } = useOrgApi();
+  const { getMyWorkspaces, getProjects, createProject, deleteProject, updateProject, verifySdk, loading } = useOrgApi();
   const { user } = useAuth();
   const [projects, setProjects]       = useState([]);
   const [workspaces, setWorkspaces]   = useState([]);
@@ -717,7 +717,6 @@ const OrgProjects = () => {
   const [sdkDrawer, setSdkDrawer]     = useState(null); // project object
   const [apiKeyData, setApiKeyData]   = useState(null); // { apiKey, projectId, projectName }
   const [toast, setToast]             = useState(null);
-  const [demoLoadingId, setDemoLoadingId] = useState(null);
 
   const isVerified = user?.verificationStatus === "VERIFIED";
   const showToast  = (type, msg) => { setToast({ type, msg }); setTimeout(() => setToast(null), 3000); };
@@ -765,19 +764,6 @@ const OrgProjects = () => {
       setEditModal(null);
       load();
     } catch (e) { showToast("error", e.message || "Update failed."); }
-  };
-
-  const handleGenerateDemoData = async (project) => {
-    setDemoLoadingId(project._id);
-    try {
-      const res = await generateDemoData(project._id, 21);
-      showToast("success", res?.message || "Live data generated.");
-      await load();
-    } catch (e) {
-      showToast("error", e.message || "Demo data generation failed.");
-    } finally {
-      setDemoLoadingId(null);
-    }
   };
 
   return (
@@ -933,19 +919,10 @@ const OrgProjects = () => {
                     </motion.button>
                   </div>
 
-                  <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-                    onClick={() => handleGenerateDemoData(proj)}
-                    disabled={demoLoadingId === proj._id}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-[#00e5ff30] text-[#00e5ff] hover:bg-[#00e5ff10] transition-all text-[10px] uppercase tracking-widest font-bold disabled:opacity-60"
-                    style={{ fontFamily: "var(--font-mono)" }}>
-                    <DatabaseZap className="w-3.5 h-3.5" />
-                    {demoLoadingId === proj._id ? "Generating Live Data..." : "Generate Live Demo Data"}
-                  </motion.button>
-
                   {/* SDK Setup button */}
                   <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                     onClick={() => setSdkDrawer(proj)}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-[#10d99030] text-[#10d990] hover:bg-[#10d99010] transition-all text-[10px] uppercase tracking-widest font-bold mt-2"
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-[#10d99030] text-[#10d990] hover:bg-[#10d99010] transition-all text-[10px] uppercase tracking-widest font-bold"
                     style={{ fontFamily: "var(--font-mono)" }}>
                     <Terminal className="w-3.5 h-3.5" /> SDK Setup & Integration
                   </motion.button>
