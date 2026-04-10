@@ -40,6 +40,22 @@ const getPageExpr = () => ({
     },
   },
 });
+const PAGE_INTERACTION_EVENTS = ["click", "button_click", "tap"];
+const JOURNEY_CONVERSION_EVENTS = [
+  "identify",
+  "login_success",
+  "signup_success",
+  "form_submit",
+  "form_success",
+  "checkout_complete",
+  "payment_success",
+  "purchase",
+  "order_completed",
+  "exam_submit",
+  "exam_complete",
+  "lead_created",
+  "conversion",
+];
 
 /* ── Overview ─────────────────────────────────── */
 export const overview = async ({ projectId, from, to }) => {
@@ -308,8 +324,13 @@ export const sessionJourney = async ({ projectId, from, to }) => {
         userKey: { $first: getUserExpr() },
         startedAt: { $first: "$ts" },
         endedAt: { $last: "$ts" },
+        entryPage: { $first: getPageExpr() },
+        exitPage: { $last: getPageExpr() },
         totalEvents: { $sum: 1 },
         pages: { $addToSet: getPageExpr() },
+        conversionEvents: {
+          $sum: { $cond: [{ $in: ["$eventName", JOURNEY_CONVERSION_EVENTS] }, 1, 0] },
+        },
         events: {
           $push: {
             eventName: "$eventName",
@@ -324,8 +345,12 @@ export const sessionJourney = async ({ projectId, from, to }) => {
         userKey: 1,
         startedAt: 1,
         endedAt: 1,
+        entryPage: 1,
+        exitPage: 1,
         totalEvents: 1,
         totalPages: { $size: "$pages" },
+        conversionEvents: 1,
+        hasConversion: { $gt: ["$conversionEvents", 0] },
         durationMs: { $subtract: ["$endedAt", "$startedAt"] },
         events: { $slice: ["$events", 12] },
       },
@@ -342,12 +367,18 @@ export const sessionJourney = async ({ projectId, from, to }) => {
         startedAt: { $min: "$ts" },
         endedAt: { $max: "$ts" },
         totalEvents: { $sum: 1 },
+        pages: { $addToSet: getPageExpr() },
+        conversionEvents: {
+          $sum: { $cond: [{ $in: ["$eventName", JOURNEY_CONVERSION_EVENTS] }, 1, 0] },
+        },
       },
     },
     {
       $project: {
         durationMs: { $subtract: ["$endedAt", "$startedAt"] },
         totalEvents: 1,
+        totalPages: { $size: "$pages" },
+        converted: { $gt: ["$conversionEvents", 0] },
       },
     },
     {
@@ -356,23 +387,39 @@ export const sessionJourney = async ({ projectId, from, to }) => {
         sessions: { $sum: 1 },
         avgDurationMs: { $avg: "$durationMs" },
         avgEventsPerSession: { $avg: "$totalEvents" },
+        avgPagesPerSession: { $avg: "$totalPages" },
+        convertedSessions: { $sum: { $cond: ["$converted", 1, 0] } },
+        singleEventSessions: { $sum: { $cond: [{ $lte: ["$totalEvents", 1] }, 1, 0] } },
       },
     },
   ]);
 
+  const totalSessions = summary?.[0]?.sessions || 0;
+  const convertedSessions = summary?.[0]?.convertedSessions || 0;
+  const singleEventSessions = summary?.[0]?.singleEventSessions || 0;
+
   return {
     summary: {
-      totalSessions: summary?.[0]?.sessions || 0,
+      totalSessions,
       avgDurationSeconds: Math.round((summary?.[0]?.avgDurationMs || 0) / 1000),
       avgEventsPerSession: Number((summary?.[0]?.avgEventsPerSession || 0).toFixed(1)),
+      avgPagesPerSession: Number((summary?.[0]?.avgPagesPerSession || 0).toFixed(1)),
+      convertedSessions,
+      conversionRate: totalSessions > 0 ? Math.round((convertedSessions / totalSessions) * 100) : 0,
+      singleEventSessions,
+      dropOffRate: totalSessions > 0 ? Math.round((singleEventSessions / totalSessions) * 100) : 0,
     },
     sessions: sessions.map((session) => ({
       sessionId: session._id,
       userKey: session.userKey || "anonymous",
       startedAt: session.startedAt,
       endedAt: session.endedAt,
+      entryPage: session.entryPage || "/",
+      exitPage: session.exitPage || "/",
       totalEvents: session.totalEvents,
       totalPages: session.totalPages,
+      conversionEvents: session.conversionEvents || 0,
+      hasConversion: Boolean(session.hasConversion),
       durationSeconds: Math.max(0, Math.round((session.durationMs || 0) / 1000)),
       events: session.events,
     })),
@@ -503,21 +550,39 @@ export const retention = async ({ projectId, from, to }) => {
     ts: { $gte: new Date(from), $lte: new Date(to) },
   };
 
-  const firstSeen = await Event.aggregate([
+  const users = await Event.aggregate([
     { $match: match },
     { $group: {
-        _id:      { $cond: [{ $ne: ["$userId",""] }, "$userId", "$anonymousId"] },
+        _id:      getUserExpr(),
         firstDay: { $min: { $dateToString: { format: "%Y-%m-%d", date: "$ts" } } },
         days:     { $addToSet: { $dateToString: { format: "%Y-%m-%d", date: "$ts" } } },
     }},
   ]);
 
+  const cohortUsers = users.length;
+  const dayToUtc = (day) => new Date(`${day}T00:00:00.000Z`).getTime();
+  const usersWithOffsets = users.map((user) => {
+    const firstDayMs = dayToUtc(user.firstDay);
+    const activeOffsets = new Set(
+      (user.days || [])
+        .map((day) => Math.round((dayToUtc(day) - firstDayMs) / 86400000))
+        .filter((offset) => offset >= 0 && offset <= 6)
+    );
+    return { ...user, activeOffsets };
+  });
+
   const cohort = Array.from({ length: 7 }, (_, i) => {
-    const retained = firstSeen.filter(u => u.days.length > i).length;
+    const retained = usersWithOffsets.filter((user) => user.activeOffsets.has(i)).length;
     return {
-      day:   `Day ${i}`,
-      users:  retained,
-      rate:   firstSeen.length > 0 ? Math.round((retained / firstSeen.length) * 100) : 0,
+      day: `Day ${i}`,
+      users: retained,
+      retainedUsers: retained,
+      cohortUsers,
+      rate: cohortUsers > 0 ? Math.round((retained / cohortUsers) * 100) : 0,
+      description:
+        i === 0
+          ? "Users active on their first tracked day"
+          : `Users who returned ${i} day${i > 1 ? "s" : ""} after first activity`,
     };
   });
 
@@ -589,8 +654,6 @@ RETENTION (Day 0–6):
 ${retStr}
   `.trim();
 };
-
-const PAGE_INTERACTION_EVENTS = ["click", "button_click", "tap"];
 
 const formatRangeLabel = (from, to) =>
   `${new Date(from).toDateString()} -> ${new Date(to).toDateString()}`;

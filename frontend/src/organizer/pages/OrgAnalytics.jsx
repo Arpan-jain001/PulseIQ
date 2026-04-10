@@ -741,6 +741,9 @@ const OrgAnalytics = () => {
   const { inGrace, daysLeft } = getGraceInfo(selectedProj);
   const { from: rangeFrom, to: rangeTo } = getRange();
   const healthColor = (s) => s>=75?"#10d990":s>=50?"#f59e0b":"#f43f8e";
+  const retentionAt = (index) => retentionData?.[index] || { rate:0, users:0, retainedUsers:0, cohortUsers:0 };
+  const retentionCohortUsers = retentionAt(0).cohortUsers || overview?.uniqueUsers || 0;
+  const journeySummary = sessionData?.summary || {};
 
   const TABS = [
     { id:"overview",  label:"Overview",    icon:BarChart3    },
@@ -1180,6 +1183,18 @@ const OrgAnalytics = () => {
                         <p className="text-[11px] text-[#3d6080] mt-8 text-center" style={{ fontFamily:"var(--font-mono)" }}>Not enough data</p>
                       ) : (
                         <>
+                          <div className="grid grid-cols-3 gap-2 mb-4">
+                            {[
+                              { label:"Cohort Users", value:retentionCohortUsers, color:"#00e5ff" },
+                              { label:"Day 1 Return", value:`${retentionAt(1).rate}%`, color:healthColor(retentionAt(1).rate) },
+                              { label:"Week Return", value:`${retentionAt(6).rate}%`, color:healthColor(retentionAt(6).rate) },
+                            ].map(({ label, value, color }) => (
+                              <div key={label} className="p-2.5 rounded-xl bg-[#04080f] border border-[#1a2a4a]">
+                                <p className="text-sm font-black" style={{ color, fontFamily:"var(--font-display)" }}>{value}</p>
+                                <p className="text-[8px] text-[#3d6080] uppercase tracking-wider" style={{ fontFamily:"var(--font-mono)" }}>{label}</p>
+                              </div>
+                            ))}
+                          </div>
                           <ResponsiveContainer width="100%" height={200}>
                             <AreaChart data={retentionData} margin={{ top:5, right:5, bottom:0, left:-20 }}>
                               <defs>
@@ -1220,8 +1235,15 @@ const OrgAnalytics = () => {
                           { label:"Day 3 — Short-Term",  i:3, desc:"3-day retention"            },
                           { label:"Day 6 — Weekly",      i:6, desc:"Week-long retention"        },
                         ].map(({ label, i, desc }) => {
-                          const val = retentionData[i]?.rate ?? 0;
+                          const row = retentionAt(i);
+                          const val = row.rate ?? 0;
                           const c   = val>50?"#10d990":val>20?"#f59e0b":"#f43f8e";
+                          const milestone = {
+                            0: { label:"Day 0 - Activation", desc:"Active on first tracked day" },
+                            1: { label:"Day 1 - Next Day", desc:"Returned exactly next day" },
+                            3: { label:"Day 3 - Short-Term", desc:"Returned after 3 days" },
+                            6: { label:"Day 6 - Weekly", desc:"Returned after 6 days" },
+                          }[i] || { label, desc };
                           return (
                             <div key={label} className="flex items-center gap-3 p-3 rounded-xl bg-[#04080f] border border-[#1a2a4a]">
                               <div className="w-10 h-10 rounded-xl flex items-center justify-center font-black text-xs flex-shrink-0"
@@ -1229,8 +1251,10 @@ const OrgAnalytics = () => {
                                 {val}%
                               </div>
                               <div>
-                                <p className="text-xs font-bold text-[#e8f4ff]">{label}</p>
-                                <p className="text-[10px] text-[#3d6080]" style={{ fontFamily:"var(--font-mono)" }}>{desc}</p>
+                                <p className="text-xs font-bold text-[#e8f4ff]">{milestone.label}</p>
+                                <p className="text-[10px] text-[#3d6080]" style={{ fontFamily:"var(--font-mono)" }}>
+                                  {milestone.desc} - {row.retainedUsers ?? row.users ?? 0}/{row.cohortUsers || retentionCohortUsers} users
+                                </p>
                               </div>
                             </div>
                           );
@@ -1271,16 +1295,24 @@ const OrgAnalytics = () => {
                       </h3>
                       <div className="grid grid-cols-2 gap-3 mb-3">
                         <div className="p-3 rounded-xl bg-[#04080f] border border-[#1a2a4a]">
-                          <p className="text-lg font-black text-[#00e5ff]" style={{ fontFamily:"var(--font-display)" }}>{sessionData?.summary?.totalSessions ?? 0}</p>
+                          <p className="text-lg font-black text-[#00e5ff]" style={{ fontFamily:"var(--font-display)" }}>{journeySummary.totalSessions ?? 0}</p>
                           <p className="text-[9px] text-[#3d6080] uppercase tracking-wider" style={{ fontFamily:"var(--font-mono)" }}>Sessions</p>
                         </div>
                         <div className="p-3 rounded-xl bg-[#04080f] border border-[#1a2a4a]">
-                          <p className="text-lg font-black text-[#10d990]" style={{ fontFamily:"var(--font-display)" }}>{sessionData?.summary?.avgDurationSeconds ?? 0}s</p>
+                          <p className="text-lg font-black text-[#10d990]" style={{ fontFamily:"var(--font-display)" }}>{journeySummary.avgDurationSeconds ?? 0}s</p>
                           <p className="text-[9px] text-[#3d6080] uppercase tracking-wider" style={{ fontFamily:"var(--font-mono)" }}>Avg duration</p>
+                        </div>
+                        <div className="p-3 rounded-xl bg-[#04080f] border border-[#1a2a4a]">
+                          <p className="text-lg font-black text-[#a855f7]" style={{ fontFamily:"var(--font-display)" }}>{journeySummary.conversionRate ?? 0}%</p>
+                          <p className="text-[9px] text-[#3d6080] uppercase tracking-wider" style={{ fontFamily:"var(--font-mono)" }}>Conversion</p>
+                        </div>
+                        <div className="p-3 rounded-xl bg-[#04080f] border border-[#1a2a4a]">
+                          <p className="text-lg font-black text-[#f43f8e]" style={{ fontFamily:"var(--font-display)" }}>{journeySummary.dropOffRate ?? 0}%</p>
+                          <p className="text-[9px] text-[#3d6080] uppercase tracking-wider" style={{ fontFamily:"var(--font-mono)" }}>Drop-off</p>
                         </div>
                       </div>
                       <p className="text-[11px] text-[#8ab4d4] leading-relaxed" style={{ fontFamily:"var(--font-mono)" }}>
-                        PulseIQ now groups recent behavior into journey sessions so you can inspect event flow and engagement depth instead of isolated counts only.
+                        PulseIQ groups recent behavior into session paths with entry page, exit page, conversion signal, and single-event drop-off risk.
                       </p>
                     </div>
 
@@ -1318,8 +1350,17 @@ const OrgAnalytics = () => {
                           <div key={s.sessionId || i} className="p-3 rounded-xl bg-[#04080f] border border-[#1a2a4a]">
                             <div className="flex items-center justify-between mb-1">
                               <p className="text-xs font-bold text-[#e8f4ff]">{s.userKey || "anonymous"}</p>
-                              <p className="text-[9px] text-[#3d6080]" style={{ fontFamily:"var(--font-mono)" }}>{s.durationSeconds}s</p>
+                              <div className="flex items-center gap-2">
+                                <span className="text-[8px] px-2 py-0.5 rounded-full uppercase font-bold"
+                                  style={{ color:s.hasConversion?"#10d990":"#f59e0b", background:s.hasConversion?"#10d99018":"#f59e0b18", fontFamily:"var(--font-mono)" }}>
+                                  {s.hasConversion ? "converted" : "watch"}
+                                </span>
+                                <p className="text-[9px] text-[#3d6080]" style={{ fontFamily:"var(--font-mono)" }}>{s.durationSeconds}s</p>
+                              </div>
                             </div>
+                            <p className="text-[9px] text-[#3d6080] mb-1.5" style={{ fontFamily:"var(--font-mono)" }}>
+                              {s.entryPage || "/"} -&gt; {s.exitPage || "/"} | {s.totalPages || 0} pages | {s.totalEvents || 0} events
+                            </p>
                             <p className="text-[10px] text-[#8ab4d4] leading-relaxed" style={{ fontFamily:"var(--font-mono)" }}>
                               {(s.events || []).map(e => e.eventName).join(" -> ") || "No event chain"}
                             </p>
