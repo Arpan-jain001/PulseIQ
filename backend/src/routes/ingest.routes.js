@@ -11,6 +11,24 @@ const rateMap = new Map();
 const RATE_WINDOW_MS = 60 * 1000;
 const RATE_LIMIT = Number(process.env.INGEST_RATE_LIMIT_PER_MINUTE || 100);
 
+function derivePagePath(properties = {}) {
+  const explicitPage = typeof properties.page === "string" ? properties.page.trim() : "";
+  if (explicitPage) return explicitPage;
+
+  const explicitPath = typeof properties.path === "string" ? properties.path.trim() : "";
+  if (explicitPath) return explicitPath;
+
+  const href = typeof properties.href === "string" ? properties.href.trim() : "";
+  if (!href) return "";
+
+  try {
+    const parsed = new URL(href);
+    return `${parsed.pathname}${parsed.search}${parsed.hash}` || "/";
+  } catch {
+    return "";
+  }
+}
+
 function checkRateLimit(apiKey) {
   const now = Date.now();
   const staleBefore = now - RATE_WINDOW_MS * 2;
@@ -89,6 +107,14 @@ router.post("/event", async (req, res) => {
     }
 
     const origin = req.headers.origin || "";
+    const normalizedProperties = { ...(properties || {}) };
+    const derivedPage = derivePagePath(normalizedProperties);
+
+    if (derivedPage) {
+      normalizedProperties.page = derivedPage;
+    } else if (eventName === "page_view" && !normalizedProperties.page) {
+      normalizedProperties.page = "/";
+    }
 
     const event = await Event.create({
       projectId: project._id,
@@ -97,7 +123,7 @@ router.post("/event", async (req, res) => {
       anonymousId: anonymousId || "",
       userId: userId || "",
       properties: {
-        ...properties,
+        ...normalizedProperties,
         origin,
       },
       ts: ts ? new Date(ts) : new Date(),

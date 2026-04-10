@@ -89,7 +89,8 @@ const StatCard = ({ icon:Icon, label, value, sub, color, trend, delay=0 }) => (
 
 /* ── Health Ring ── */
 const HealthRing = ({ score, label, color }) => {
-  const r = 36, c = 2*Math.PI*r, dash = (score/100)*c;
+  const safeScore = Math.max(0, Math.min(100, Math.round(Number(score) || 0)));
+  const r = 36, c = 2*Math.PI*r, dash = (safeScore/100)*c;
   return (
     <div className="flex flex-col items-center">
       <svg width="100" height="100" viewBox="0 0 100 100">
@@ -100,7 +101,7 @@ const HealthRing = ({ score, label, color }) => {
           transition={{ duration:1.5, ease:"easeOut" }}
           style={{ transformOrigin:"center", transform:"rotate(-90deg)" }}/>
         <text x="50" y="46" textAnchor="middle" fill="#e8f4ff" fontSize="18" fontWeight="900"
-          style={{ fontFamily:"var(--font-display)" }}>{score}</text>
+          style={{ fontFamily:"var(--font-display)" }}>{safeScore}</text>
         <text x="50" y="60" textAnchor="middle" fill="#3d6080" fontSize="8"
           style={{ fontFamily:"var(--font-mono)" }}>/100</text>
       </svg>
@@ -126,7 +127,7 @@ const AiTerminalCard = ({ verdict, color="#00e5ff" }) => (
       <div>
         <p className="text-[10px] uppercase tracking-widest mb-1.5"
           style={{ color, fontFamily:"var(--font-mono)" }}>
-          {verdict || "ai_insight → analyzing..."}
+          {verdict || "ai_insight -> analyzing..."}
         </p>
       </div>
     </div>
@@ -138,13 +139,20 @@ const PageInsightPanel = ({ pageData, projectId, from, to, onClose }) => {
   const [data, setData]     = useState(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr]       = useState("");
+  const pageKey = pageData?._id || pageData?.page || pageData?.path || "/";
 
   useEffect(() => {
     const fetch_ = async () => {
+      if (!projectId || !pageKey) {
+        setErr("Missing project or page context");
+        setLoading(false);
+        return;
+      }
+
       try {
         const res = await fetch(`${BASE}/api/ai/page-insights`, {
           method:"POST", headers:authHdr(),
-          body: JSON.stringify({ projectId, page:pageData._id, from, to }),
+          body: JSON.stringify({ projectId, page:pageKey, from, to }),
         });
         const json = await res.json();
         if (json.success) setData(json.data);
@@ -153,13 +161,20 @@ const PageInsightPanel = ({ pageData, projectId, from, to, onClose }) => {
       finally { setLoading(false); }
     };
     fetch_();
-  }, []);
+  }, [projectId, pageKey, from, to]);
 
   const healthColor = { good:"#10d990", warning:"#f59e0b", critical:"#f43f8e" }[data?.health] || "#3d6080";
+  const pageMetricCards = data?.metrics ? [
+    { label:"Views/User", value:data.metrics.viewsPerUser ?? 0, color:"#f59e0b" },
+    { label:"Sessions", value:data.metrics.uniqueSessions ?? 0, color:"#00e5ff" },
+    { label:"Success", value:data.metrics.successSignals ?? 0, color:"#10d990" },
+    { label:"Scroll Samples", value:data.metrics.scrollSamples ?? 0, color:"#a855f7" },
+  ] : [];
+  const pageTrendData = data?.trend || [];
 
   return (
     <motion.div initial={{ opacity:0, x:20 }} animate={{ opacity:1, x:0 }} exit={{ opacity:0, x:20 }}
-      className="fixed right-0 top-0 bottom-0 w-full max-w-md z-50 overflow-y-auto"
+      className="fixed right-0 top-0 bottom-0 w-full max-w-xl z-50 overflow-y-auto"
       style={{ background:"#060d18", borderLeft:"1px solid #1a2a4a", boxShadow:"-8px 0 40px #00000077" }}>
       <div className="h-[2px]" style={{ background:"linear-gradient(90deg,#a855f7,#f43f8e,#00e5ff)" }}/>
       <div className="p-5">
@@ -169,7 +184,7 @@ const PageInsightPanel = ({ pageData, projectId, from, to, onClose }) => {
               style={{ fontFamily:"var(--font-mono)" }}>Page AI Analysis</p>
             <h3 className="text-sm font-black text-[#e8f4ff] uppercase"
               style={{ fontFamily:"var(--font-display)" }}>
-              {(pageData._id || "/").slice(0, 24)}
+              {pageKey.slice(0, 24)}
             </h3>
           </div>
           <button onClick={onClose}
@@ -210,12 +225,89 @@ const PageInsightPanel = ({ pageData, projectId, from, to, onClose }) => {
             {/* Verdict terminal card */}
             <AiTerminalCard verdict={data.verdict} color={healthColor}/>
 
+            {pageMetricCards.length > 0 && (
+              <div className="grid grid-cols-2 gap-3">
+                {pageMetricCards.map((item) => (
+                  <div key={item.label} className="rounded-xl border border-[#1a2a4a] bg-[#04080f] p-3">
+                    <p className="text-lg font-black" style={{ color:item.color, fontFamily:"var(--font-display)" }}>
+                      {typeof item.value === "number" ? item.value.toLocaleString() : item.value}
+                    </p>
+                    <p className="text-[9px] text-[#3d6080] uppercase tracking-widest mt-0.5"
+                      style={{ fontFamily:"var(--font-mono)" }}>{item.label}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+
             {/* Summary */}
             <div className="p-4 rounded-xl border bg-[#04080f]"
               style={{ borderColor:`${healthColor}30` }}>
               <p className="text-xs text-[#8ab4d4] leading-relaxed"
                 style={{ fontFamily:"var(--font-mono)" }}>{data.summary}</p>
             </div>
+
+            {pageTrendData.length > 0 && (
+              <div className="rounded-xl border border-[#1a2a4a] bg-[#04080f] p-4">
+                <div className="flex items-center justify-between gap-2 mb-3">
+                  <div>
+                    <p className="text-[10px] text-[#00e5ff] uppercase tracking-widest"
+                      style={{ fontFamily:"var(--font-mono)" }}>Page Trend</p>
+                    <p className="text-xs text-[#3d6080]" style={{ fontFamily:"var(--font-mono)" }}>
+                      Views, clicks, and active users on this route
+                    </p>
+                  </div>
+                  {data.metrics?.viewShare !== undefined && (
+                    <p className="text-[10px] text-[#8ab4d4] text-right" style={{ fontFamily:"var(--font-mono)" }}>
+                      {data.metrics.viewShare}% share
+                    </p>
+                  )}
+                </div>
+                <ResponsiveContainer width="100%" height={170}>
+                  <AreaChart data={pageTrendData} margin={{ top:5, right:5, bottom:0, left:-20 }}>
+                    <defs>
+                      <linearGradient id="pageViewsGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#00e5ff" stopOpacity={0.28}/>
+                        <stop offset="95%" stopColor="#00e5ff" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#1a2a4a" vertical={false}/>
+                    <XAxis
+                      dataKey="date"
+                      tick={{ fill:"#3d6080", fontSize:9, fontFamily:"var(--font-mono)" }}
+                      axisLine={false}
+                      tickLine={false}
+                      tickFormatter={(value) => String(value).slice(5)}
+                    />
+                    <YAxis tick={{ fill:"#3d6080", fontSize:9, fontFamily:"var(--font-mono)" }} axisLine={false} tickLine={false}/>
+                    <Tooltip content={<Tip />}/>
+                    <Area type="monotone" dataKey="pageViews" name="Page Views" stroke="#00e5ff" strokeWidth={2} fill="url(#pageViewsGradient)" />
+                    <Line type="monotone" dataKey="clicks" name="Clicks" stroke="#10d990" strokeWidth={1.8} dot={false} />
+                    <Line type="monotone" dataKey="uniqueUsers" name="Users" stroke="#f59e0b" strokeWidth={1.8} dot={false} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+
+            {data.topEvents?.length > 0 && (
+              <div className="rounded-xl border border-[#1a2a4a] bg-[#04080f] p-4">
+                <p className="text-[10px] text-[#a855f7] uppercase tracking-widest mb-2"
+                  style={{ fontFamily:"var(--font-mono)" }}>Top Signals On This Page</p>
+                <div className="flex flex-wrap gap-2">
+                  {data.topEvents.slice(0, 6).map((item, index) => (
+                    <div key={`${item.name}-${index}`}
+                      className="rounded-full border px-2.5 py-1 text-[10px]"
+                      style={{
+                        borderColor:`${PIE_COLORS[index % PIE_COLORS.length]}33`,
+                        color:PIE_COLORS[index % PIE_COLORS.length],
+                        background:`${PIE_COLORS[index % PIE_COLORS.length]}10`,
+                        fontFamily:"var(--font-mono)",
+                      }}>
+                      {item.name}: {item.count}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Problems */}
             {data.problems?.length > 0 && (
@@ -238,7 +330,7 @@ const PageInsightPanel = ({ pageData, projectId, from, to, onClose }) => {
                           </span>
                         </div>
                         <p className="text-[10px] text-[#3d6080]"
-                          style={{ fontFamily:"var(--font-mono)" }}>→ {p.fix}</p>
+                          style={{ fontFamily:"var(--font-mono)" }}>Fix: {p.fix}</p>
                       </motion.div>
                     );
                   })}
@@ -254,10 +346,60 @@ const PageInsightPanel = ({ pageData, projectId, from, to, onClose }) => {
                 <div className="space-y-2">
                   {data.opportunities.map((o, i) => (
                     <div key={i} className="flex items-start gap-2 p-3 rounded-xl border border-[#10d99020] bg-[#10d99008]">
-                      <span className="text-[#10d990] mt-0.5">💡</span>
+                      <span className="text-[#10d990] mt-0.5">+</span>
                       <p className="text-[11px] text-[#8ab4d4]" style={{ fontFamily:"var(--font-mono)" }}>{o}</p>
                     </div>
                   ))}
+                </div>
+              </div>
+            )}
+
+            {data.recommendations?.length > 0 && (
+              <div>
+                <p className="text-[10px] text-[#00e5ff] uppercase tracking-widest mb-2"
+                  style={{ fontFamily:"var(--font-mono)" }}>Improve First</p>
+                <div className="space-y-2">
+                  {data.recommendations.map((rec, i) => {
+                    const rc = { high:"#f43f8e", medium:"#f59e0b", low:"#10d990" }[rec.priority] || "#00e5ff";
+                    return (
+                      <div key={i} className="p-3 rounded-xl border"
+                        style={{ borderColor:`${rc}25`, background:`${rc}08` }}>
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="text-xs font-bold text-[#e8f4ff]">{rec.action}</p>
+                          <span className="text-[9px] px-2 py-0.5 rounded-full font-bold uppercase"
+                            style={{ color:rc, background:`${rc}20`, fontFamily:"var(--font-mono)" }}>
+                            {rec.priority || "action"}
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-[#8ab4d4]"
+                          style={{ fontFamily:"var(--font-mono)" }}>{rec.impact}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {data.predictions?.length > 0 && (
+              <div>
+                <p className="text-[10px] text-[#f59e0b] uppercase tracking-widest mb-2"
+                  style={{ fontFamily:"var(--font-mono)" }}>Page Predictions</p>
+                <div className="space-y-2">
+                  {data.predictions.map((pred, i) => {
+                    const tc = pred.trend==="up" ? "#10d990" : pred.trend==="down" ? "#f43f8e" : "#f59e0b";
+                    return (
+                      <div key={i} className="p-3 rounded-xl border border-[#1a2a4a] bg-[#04080f]">
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="text-[10px] uppercase tracking-wider"
+                            style={{ color:tc, fontFamily:"var(--font-mono)" }}>{pred.metric}</p>
+                          <span className="text-[9px] uppercase"
+                            style={{ color:tc, fontFamily:"var(--font-mono)" }}>{pred.trend}</span>
+                        </div>
+                        <p className="text-[11px] text-[#8ab4d4]"
+                          style={{ fontFamily:"var(--font-mono)" }}>{pred.forecast}</p>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -271,7 +413,7 @@ const PageInsightPanel = ({ pageData, projectId, from, to, onClose }) => {
 /* ── AI Chat ── */
 const AiChat = ({ projectId, from, to }) => {
   const [msgs, setMsgs]       = useState([
-    { role:"ai", text:"Hi! I'm PulseIQ AI. Ask me anything about your analytics — \"Why is bounce rate high?\", \"Which page drops the most users?\", \"What should I improve first?\"" }
+    { role:"ai", text:"Hi! I'm PulseIQ AI. Ask me anything about your analytics - \"Why is bounce rate high?\", \"Which page drops the most users?\", \"What should I improve first?\"" }
   ]);
   const [input, setInput]     = useState("");
   const [loading, setLoading] = useState(false);
@@ -316,7 +458,7 @@ const AiChat = ({ projectId, from, to }) => {
             AI Analytics Chat
           </p>
         </div>
-        <span className="text-[9px] text-[#a855f7]" style={{ fontFamily:"var(--font-mono)" }}>Gemini AI</span>
+        <span className="text-[9px] text-[#a855f7]" style={{ fontFamily:"var(--font-mono)" }}>PulseIQ AI</span>
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-2.5">
@@ -491,6 +633,10 @@ const OrgAnalytics = () => {
     if (p.sdkVerified) return "#10d990";
     return getGraceInfo(p).inGrace ? "#f59e0b" : "#f43f8e";
   };
+
+  const aiSupportHint = aiError.toLowerCase().includes("quota")
+    ? "PulseIQ AI quota temporarily hit ho gayi hai. Backend configured key pool me next key automatic try karega; server restart ke baad dobara generate karo."
+    : "Check backend/.env for the PulseIQ AI key pool, then restart the backend server.";
 
   const refreshProjects = useCallback(async () => {
     const res  = await getProjects();
@@ -870,7 +1016,7 @@ const OrgAnalytics = () => {
                         style={{ fontFamily:"var(--font-display)" }}>All Pages</h2>
                     </div>
                     <p className="text-[10px] text-[#3d6080]" style={{ fontFamily:"var(--font-mono)" }}>
-                      Click a page → AI Analysis
+                      Click a page for AI Analysis
                     </p>
                   </div>
 
@@ -1175,7 +1321,7 @@ const OrgAnalytics = () => {
                               <p className="text-[9px] text-[#3d6080]" style={{ fontFamily:"var(--font-mono)" }}>{s.durationSeconds}s</p>
                             </div>
                             <p className="text-[10px] text-[#8ab4d4] leading-relaxed" style={{ fontFamily:"var(--font-mono)" }}>
-                              {(s.events || []).map(e => e.eventName).join(" → ") || "No event chain"}
+                              {(s.events || []).map(e => e.eventName).join(" -> ") || "No event chain"}
                             </p>
                           </div>
                         ))}
@@ -1218,7 +1364,7 @@ const OrgAnalytics = () => {
                   <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
                     <div>
                       <p className="text-[10px] text-[#a855f7] uppercase tracking-widest mb-0.5"
-                        style={{ fontFamily:"var(--font-mono)" }}>Gemini AI — Real Data</p>
+                        style={{ fontFamily:"var(--font-mono)" }}>PulseIQ AI - Real Data</p>
                       <h2 className="text-lg font-black text-[#e8f4ff] uppercase"
                         style={{ fontFamily:"var(--font-display)" }}>AI Analytics Intelligence</h2>
                     </div>
@@ -1240,7 +1386,7 @@ const OrgAnalytics = () => {
                         <p className="text-xs font-bold text-[#f43f8e] mb-1">AI Error</p>
                         <p className="text-[11px] text-[#8ab4d4]" style={{ fontFamily:"var(--font-mono)" }}>{aiError}</p>
                         <p className="text-[10px] text-[#3d6080] mt-1" style={{ fontFamily:"var(--font-mono)" }}>
-                          Ensure GEMINI_API_KEY is set in .env and server restarted
+                          {aiSupportHint}
                         </p>
                       </div>
                     </div>
@@ -1253,7 +1399,7 @@ const OrgAnalytics = () => {
                       </div>
                       <p className="text-sm font-bold text-[#e8f4ff] mb-2">Generate AI Insights</p>
                       <p className="text-xs text-[#3d6080] max-w-sm" style={{ fontFamily:"var(--font-mono)" }}>
-                        Gemini AI will analyze your real project data and provide health score, insights, recommendations, and predictions.
+                        PulseIQ AI will analyze your full project data and provide health score, insights, recommendations, and predictions.
                       </p>
                     </div>
                   )}
@@ -1263,7 +1409,7 @@ const OrgAnalytics = () => {
                       <motion.div className="w-16 h-16 rounded-full border-4 border-[#a855f733] border-t-[#a855f7] mb-4"
                         animate={{ rotate:360 }} transition={{ repeat:Infinity, duration:1, ease:"linear" }}/>
                       <p className="text-sm font-bold text-[#e8f4ff] mb-1">Analyzing your data...</p>
-                      <p className="text-xs text-[#3d6080]" style={{ fontFamily:"var(--font-mono)" }}>Gemini is processing analytics</p>
+                      <p className="text-xs text-[#3d6080]" style={{ fontFamily:"var(--font-mono)" }}>PulseIQ AI is processing analytics</p>
                     </div>
                   )}
 
@@ -1313,12 +1459,12 @@ const OrgAnalytics = () => {
                                     <div className="min-w-0">
                                       <p className="text-[10px] uppercase tracking-widest mb-1 truncate"
                                         style={{ color:prioColor, fontFamily:"var(--font-mono)" }}>
-                                        ai_insight → {(pi.page||"/").slice(0,16)} → {pi.priority}
+                                        ai_insight / {(pi.page||"/").slice(0,16)} / {pi.priority}
                                       </p>
                                       <p className="text-[11px] text-[#3d6080] leading-relaxed"
                                         style={{ fontFamily:"var(--font-mono)" }}>{pi.issue}</p>
                                       <p className="text-[10px] text-[#1a3a6b] mt-1"
-                                        style={{ fontFamily:"var(--font-mono)" }}>→ {pi.recommendation}</p>
+                                        style={{ fontFamily:"var(--font-mono)" }}>Fix: {pi.recommendation}</p>
                                     </div>
                                   </div>
                                 </motion.div>
@@ -1362,11 +1508,12 @@ const OrgAnalytics = () => {
                           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                             {aiData.insights.map((ins,i) => {
                               const cfg = {
-                                growth:      { color:"#10d990", icon:"📈" },
-                                warning:     { color:"#f43f8e", icon:"⚠️" },
-                                opportunity: { color:"#a855f7", icon:"💡" },
-                                anomaly:     { color:"#f59e0b", icon:"🔍" },
-                              }[ins.type] || { color:"#3d6080", icon:"•" };
+                                growth:      { color:"#10d990", label:"UP", icon:ArrowUpRight },
+                                warning:     { color:"#f43f8e", label:"WARN", icon:AlertTriangle },
+                                opportunity: { color:"#a855f7", label:"IDEA", icon:Sparkles },
+                                anomaly:     { color:"#f59e0b", label:"CHECK", icon:AlertCircle },
+                              }[ins.type] || { color:"#3d6080", label:"INFO", icon:Info };
+                              const InsightIcon = cfg.icon;
                               const ic = { high:"#f43f8e", medium:"#f59e0b", low:"#10d990" }[ins.impact]||"#3d6080";
                               return (
                                 <motion.div key={i} initial={{ opacity:0, x:-20 }} animate={{ opacity:1, x:0 }} transition={{ delay:i*0.08 }}
@@ -1374,8 +1521,16 @@ const OrgAnalytics = () => {
                                   style={{ background:`${cfg.color}08`, borderColor:`${cfg.color}25` }}>
                                   <div className="flex items-center justify-between mb-2">
                                     <div className="flex items-center gap-2">
-                                      <span className="text-base">{cfg.icon}</span>
-                                      <p className="text-xs font-black text-[#e8f4ff]">{ins.title}</p>
+                                      <span className="w-7 h-7 rounded-lg flex items-center justify-center text-[8px] font-black"
+                                        style={{ background:`${cfg.color}16`, color:cfg.color, border:`1px solid ${cfg.color}30`, fontFamily:"var(--font-mono)" }}>
+                                        <InsightIcon className="w-3.5 h-3.5"/>
+                                      </span>
+                                      <div>
+                                        <p className="text-[8px] uppercase tracking-widest" style={{ color:cfg.color, fontFamily:"var(--font-mono)" }}>
+                                          {cfg.label}
+                                        </p>
+                                        <p className="text-xs font-black text-[#e8f4ff]">{ins.title}</p>
+                                      </div>
                                     </div>
                                     <span className="text-[9px] px-2 py-0.5 rounded-full font-bold uppercase flex-shrink-0"
                                       style={{ color:ic, background:`${ic}20`, fontFamily:"var(--font-mono)" }}>
@@ -1412,7 +1567,7 @@ const OrgAnalytics = () => {
                                   </div>
                                   <p className="text-xs font-bold text-[#e8f4ff] mb-1">{r.action}</p>
                                   <p className="text-[10px] text-[#3d6080]" style={{ fontFamily:"var(--font-mono)" }}>
-                                    → {r.expected_impact}
+                                    Impact: {r.expected_impact}
                                   </p>
                                 </motion.div>
                               );

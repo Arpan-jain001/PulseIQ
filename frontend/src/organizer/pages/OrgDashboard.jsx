@@ -109,7 +109,7 @@ const AiTerminalWidget = ({ projectId, projectName }) => {
               AI Quick Insight
             </p>
             <p className="text-[10px] text-[#3d6080]" style={{ fontFamily: "var(--font-mono)" }}>
-              Click to analyze {projectName} with Gemini AI
+              Click to analyze {projectName} with PulseIQ AI
             </p>
           </div>
           <Sparkles className="w-4 h-4 text-[#a855f7] opacity-60 group-hover:opacity-100 transition-opacity" />
@@ -128,7 +128,7 @@ const AiTerminalWidget = ({ projectId, projectName }) => {
             <motion.div className="w-5 h-5 rounded-full border-2 border-[#a855f733] border-t-[#a855f7] flex-shrink-0"
               animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 0.9, ease: "linear" }} />
             <p className="text-[11px] text-[#3d6080]" style={{ fontFamily: "var(--font-mono)" }}>
-              Gemini AI analyzing {projectName}...
+              PulseIQ AI analyzing {projectName}...
             </p>
           </div>
         ) : insight ? (
@@ -529,7 +529,7 @@ const OrgDashboard = () => {
                 <div>
                   <p className="text-xs font-black text-[#e8f4ff] mb-1">AI Insights Available</p>
                   <p className="text-[10px] text-[#3d6080]" style={{ fontFamily: "var(--font-mono)" }}>
-                    Verify your SDK to unlock Gemini AI analytics insights
+                    Verify your SDK to unlock PulseIQ AI analytics insights
                   </p>
                 </div>
               </div>
