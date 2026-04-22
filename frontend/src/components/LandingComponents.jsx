@@ -205,6 +205,8 @@ const TEAM = [
     color: "#f43f8e",
     gradient: "from-pink-500 to-rose-600",
     linkedin: "https://linkedin.com/in/khushi-malhotra-843b64310/",
+    email: "khushi.malhotra_cs23@gla.ac.in",
+    phone: "+91-9456673129",
   },
   {
     name: "Radhika Gupta",
@@ -212,6 +214,8 @@ const TEAM = [
     color: "#f59e0b",
     gradient: "from-amber-500 to-orange-500",
     linkedin: "https://linkedin.com/in/radhika-gupta-45a954300/",
+    email: "radhikagupta18112000@gmail.com",
+    phone: "+91-6386541259",
   },
 ];
 
