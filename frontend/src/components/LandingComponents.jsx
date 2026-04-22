@@ -12,6 +12,7 @@ import {
   Sparkles,
   Linkedin,
   Mail,
+  Phone,
   ArrowRight,
   Loader2,
   Heart,
@@ -177,6 +178,7 @@ const TEAM = [
     gradient: "from-cyan-500 to-blue-600",
     linkedin: "https://linkedin.com/in/arpan-jain-42386b2a7",
     email: "arpanjain00123@gmail.com",
+    phone: "+91-6399003541",
     isLead: true,
   },
   {
@@ -186,13 +188,16 @@ const TEAM = [
     gradient: "from-violet-500 to-purple-600",
     linkedin: "https://linkedin.com/in/aryan-gupta-5731662b4/",
     email: "aryan2135gupta@gmail.com",
+    phone: "+91-6388484465",
   },
   {
     name: "Girraj Singh",
     role: "Core Engineer",
     color: "#10d990",
     gradient: "from-emerald-500 to-teal-600",
+    linkedin: "https://www.linkedin.com/in/girraj-singh-326189303/",
     email: "girraj.singh_cs23@gla.ac.in",
+    phone: "+91-8791211266",
   },
   {
     name: "Khushi Malhotra",
@@ -310,6 +315,14 @@ export const TeamSection = () => (
                     <Mail className="w-3.5 h-3.5" />
                   </a>
                 )}
+                {member.phone && (
+  <a
+    href={`tel:${member.phone}`}
+    className="p-2 rounded-lg border border-[#0d2140] text-[#3d6080] hover:border-[#00e5ff33] hover:text-[#00e5ff] hover:bg-[#00e5ff08] transition-all duration-300"
+  >
+    <Phone className="w-3.5 h-3.5" />
+  </a>
+)}
               </div>
             </div>
           </motion.div>
