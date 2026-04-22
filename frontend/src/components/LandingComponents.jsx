@@ -664,7 +664,7 @@ export const Footer = () => (
           style={{ fontFamily: "var(--font-mono)" }}
         >
           Built with <Heart className="w-3 h-3 text-[#f43f8e] fill-[#f43f8e]" /> by Arpan Jain and Team
-          at GLA University, Mathura
+          at GLA University Mathura
         </p>
         <p className="text-[10px] text-[#1a3a6b]" style={{ fontFamily: "var(--font-mono)" }}>
           Copyright {new Date().getFullYear()} PulseIQ Analytics. All rights reserved.
